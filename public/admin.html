@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ServiceOS — Panel de Administración Comercial</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+  <!-- LOGIN MODAL / SCREEN (SHOWN IF NOT AUTHENTICATED) -->
+  <div id="loginScreen" style="display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px;">
+    <div class="glass-card" style="width: 100%; max-width: 420px; text-align: center; border-color: var(--primary);">
+      <div class="brand-logo" style="font-size: 2rem; justify-content: center; margin-bottom: 8px;">
+        <span>ServiceOS</span>
+      </div>
+      <span class="logo-badge" style="font-size: 0.8rem; padding: 4px 12px;">PANEL DE ADMINISTRACIÓN</span>
+      
+      <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 20px 0 24px 0;">
+        Ingresa tus credenciales corporativas para gestionar el local piloto.
+      </p>
+
+      <form onsubmit="handleAdminLogin(event)">
+        <div style="margin-bottom: 16px; text-align: left;">
+          <label style="font-size: 0.82rem; font-weight: 600; color: var(--text-secondary);">Correo del Administrador</label>
+          <input type="email" id="adminEmail" class="note-input" value="admin@restaurant.com" required style="margin-top: 4px;">
+        </div>
+        
+        <div style="margin-bottom: 24px; text-align: left;">
+          <label style="font-size: 0.82rem; font-weight: 600; color: var(--text-secondary);">Contraseña / PIN de Acceso</label>
+          <input type="password" id="adminPassword" class="note-input" value="admin123" required style="margin-top: 4px;">
+        </div>
+
+        <button type="submit" class="btn-action btn-primary">
+          🔐 Iniciar Sesión en Panel Admin
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADMIN MAIN DASHBOARD (SHOWN AFTER LOGIN) -->
+  <div id="adminDashboard" style="display: none;">
+    
+    <!-- App Header -->
+    <header class="app-header">
+      <div class="brand-container">
+        <div class="brand-logo">
+          <span>ServiceOS</span>
+        </div>
+        <span class="logo-badge" style="background: rgba(99,102,241,0.15); color: var(--accent); border-color: rgba(99,102,241,0.3);">ADMIN CONSOLE</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <span style="font-size: 0.88rem; color: var(--text-secondary);" id="adminUserTag">admin@restaurant.com</span>
+        <button class="chip-btn" onclick="handleLogout()">🚪 Cerrar Sesión</button>
+      </div>
+    </header>
+
+    <main class="main-container" style="max-width: 1200px;">
+      
+      <!-- Top Metrics Executive Summary -->
+      <div class="metrics-row">
+        <div class="metric-card">
+          <div class="metric-icon" style="background: rgba(6,182,212,0.15); color: var(--primary);">📍</div>
+          <div class="metric-data">
+            <div class="value" id="metricTotalPoints">15 Mesas</div>
+            <div class="label">Puntos Físicos Habilitados</div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon" style="background: rgba(16,185,129,0.15); color: var(--success);">👥</div>
+          <div class="metric-data">
+            <div class="value" id="metricStaffCount">3 Meseros</div>
+            <div class="label">Personal en Turno</div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon" style="background: rgba(245,158,11,0.15); color: var(--warning);">⚡</div>
+          <div class="metric-data">
+            <div class="value" id="metricShiftRequests">60</div>
+            <div class="label">Solicitudes Atendidas Hoy</div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon" style="background: rgba(99,102,241,0.15); color: var(--accent);">⏱️</div>
+          <div class="metric-data">
+            <div class="value" id="metricAvgMTTR">1.2 min</div>
+            <div class="label">Tiempo Medio Respuesta (MTTR)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="category-tabs" style="margin-bottom: 24px;">
+        <button class="tab-btn active" onclick="switchAdminTab('QR')">🖨️ Códigos QR por Mesa</button>
+        <button class="tab-btn" onclick="switchAdminTab('MAP')">🗺️ Estructura & Zonas (BC-02)</button>
+        <button class="tab-btn" onclick="switchAdminTab('CATALOG')">☕ Catálogo & Menú Digital</button>
+        <button class="tab-btn" onclick="switchAdminTab('STAFF')">👥 Personal & Turnos (BC-04)</button>
+        <button class="tab-btn" onclick="switchAdminTab('REPORTS')">📊 Reportes de Negocio (BC-05)</button>
+      </div>
+
+      <!-- TAB 1: QR CODE GENERATOR & PRINTING ENGINE -->
+      <div id="tabQR" class="glass-card">
+        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h2 class="section-title">🖨️ Generador de Códigos QR para Mesas</h2>
+            <p class="section-subtitle">Imprime o descarga los códigos QR para pegar en cada mesa del restaurante.</p>
+          </div>
+          <button class="btn-action btn-primary" style="width: auto; padding: 10px 20px; font-size: 0.9rem;" onclick="window.print()">
+            🖨️ Imprimir Todos los QR
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 20px;" id="qrCardsGrid">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- TAB 2: VENUE SPATIAL STRUCTURE (BC-02) -->
+      <div id="tabMAP" class="glass-card" style="display: none;">
+        <div class="section-header">
+          <h2 class="section-title">🗺️ Mapa del Establecimiento & Zonas (BC-02)</h2>
+          <p class="section-subtitle">Configura las zonas físicas y agrupa las mesas para despacho de personal.</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+          <div style="background: rgba(17,24,39,0.6); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-glass);">
+            <h3 style="font-family: var(--font-heading); color: var(--primary);">🌿 Zona Terraza Exterior</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">10 Mesas asignadas (Mesa 01 a Mesa 10)</p>
+            <div style="margin-top: 12px; font-size: 0.85rem; color: var(--success);">👤 Personal Asignado: Sofía (Staff 01)</div>
+          </div>
+
+          <div style="background: rgba(17,24,39,0.6); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-glass);">
+            <h3 style="font-family: var(--font-heading); color: var(--primary);">🍽️ Comedor Principal</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">15 Mesas asignadas (Mesa 11 a Mesa 25)</p>
+            <div style="margin-top: 12px; font-size: 0.85rem; color: var(--success);">👤 Personal Asignado: Pedro (Staff 02)</div>
+          </div>
+
+          <div style="background: rgba(17,24,39,0.6); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-glass);">
+            <h3 style="font-family: var(--font-heading); color: var(--primary);">🍸 Barra / Lounge</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">5 Puntos de Barra (Barra 01 a Barra 05)</p>
+            <div style="margin-top: 12px; font-size: 0.85rem; color: var(--success);">👤 Personal Asignado: Carlos (Staff 03)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: CATALOG & DIGITAL MENU CUSTOMIZER -->
+      <div id="tabCATALOG" class="glass-card" style="display: none;">
+        <div class="section-header">
+          <h2 class="section-title">☕ Configuración del Catálogo & Menú Digital</h2>
+          <p class="section-subtitle">Ajusta el modo del establecimiento (Café, Restaurante, Bar) y los precios de la carta.</p>
+        </div>
+
+        <div style="margin-bottom: 24px; background: rgba(0,0,0,0.25); padding: 16px; border-radius: var(--radius-md);">
+          <label style="font-weight: 700; color: var(--text-main);">Modo del Local Activo:</label>
+          <select class="note-input" style="margin-top: 8px; font-weight: 700;" onchange="alert('Modo actualizado a ' + this.value)">
+            <option value="CAFE">☕ Cafetería / Café (Intenciones: Pedir Cuenta, Llamar Mesero, Limpieza, Servilletas)</option>
+            <option value="REST">🍽️ Restaurante Comedor (Intenciones: Pedir Cuenta, Solicitar Agua, Llamar Mesero, Limpieza)</option>
+            <option value="BAR">🍸 Bar / Pub (Intenciones: Pedir Cuenta, Llamar Mesero, Hielo, Limpieza Barra)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- TAB 4: STAFF ROSTER & SHIFT MANAGEMENT -->
+      <div id="tabSTAFF" class="glass-card" style="display: none;">
+        <div class="section-header">
+          <h2 class="section-title">👥 Gestión de Personal & Turnos (BC-04)</h2>
+          <p class="section-subtitle">Registra garzones y asigna turnos por zona operativa.</p>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 0.9rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--border-glass); text-align: left; color: var(--text-secondary);">
+              <th style="padding: 12px;">Mesero / Staff</th>
+              <th style="padding: 12px;">Zona Asignada</th>
+              <th style="padding: 12px;">Estado Turno</th>
+              <th style="padding: 12px;">Solicitudes Atendidas</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid var(--border-glass);">
+              <td style="padding: 12px; font-weight: 700;">Sofía (Staff 01)</td>
+              <td style="padding: 12px;">🌿 Terraza Exterior</td>
+              <td style="padding: 12px; color: var(--success); font-weight: 700;">ACTIVO</td>
+              <td style="padding: 12px;">24 Mesas</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border-glass);">
+              <td style="padding: 12px; font-weight: 700;">Pedro (Staff 02)</td>
+              <td style="padding: 12px;">🍽️ Comedor Principal</td>
+              <td style="padding: 12px; color: var(--success); font-weight: 700;">ACTIVO</td>
+              <td style="padding: 12px;">21 Mesas</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border-glass);">
+              <td style="padding: 12px; font-weight: 700;">Carlos (Staff 03)</td>
+              <td style="padding: 12px;">🍸 Barra / Lounge</td>
+              <td style="padding: 12px; color: var(--success); font-weight: 700;">ACTIVO</td>
+              <td style="padding: 12px;">15 Mesas</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- TAB 5: BUSINESS REPORTS & SLA METRICS -->
+      <div id="tabREPORTS" class="glass-card" style="display: none;">
+        <div class="section-header">
+          <h2 class="section-title">📊 Reportes de Operación & Tiempos SLA (BC-05)</h2>
+          <p class="section-subtitle">Analiza el rendimiento del local para optimizar la rotación de mesas.</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+          <div style="background: rgba(17,24,39,0.6); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-glass);">
+            <h3 style="font-family: var(--font-heading); color: var(--primary);">Intenciones Más Frecuentes Hoy</h3>
+            <ul style="margin-top: 12px; list-style: none; font-size: 0.9rem; color: var(--text-secondary);">
+              <li style="padding: 6px 0; border-bottom: 1px solid var(--border-glass); display: flex; justify-content: space-between;">
+                <span>💳 Pedir la Cuenta</span>
+                <span style="font-weight: 700; color: var(--text-main);">38 solicitudes (63%)</span>
+              </li>
+              <li style="padding: 6px 0; border-bottom: 1px solid var(--border-glass); display: flex; justify-content: space-between;">
+                <span>🙋‍♂️ Llamar al Mesero</span>
+                <span style="font-weight: 700; color: var(--text-main);">14 solicitudes (23%)</span>
+              </li>
+              <li style="padding: 6px 0; display: flex; justify-content: space-between;">
+                <span>🧹 Limpieza de Mesa</span>
+                <span style="font-weight: 700; color: var(--text-main);">8 solicitudes (14%)</span>
+              </li>
+            </ul>
+          </div>
+
+          <div style="background: rgba(17,24,39,0.6); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-glass);">
+            <h3 style="font-family: var(--font-heading); color: var(--success);">Cumplimiento de Estándar SLA</h3>
+            <div style="font-size: 2.2rem; font-weight: 800; color: var(--success); margin-top: 8px;">96.8%</div>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">58 de 60 solicitudes fueron atendidas dentro del tiempo objetivo (T1 &lt; 2 min).</p>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    function handleAdminLogin(event) {
+      event.preventDefault();
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('adminDashboard').style.display = 'block';
+      generateQRCards();
+    }
+
+    function handleLogout() {
+      document.getElementById('adminDashboard').style.display = 'none';
+      document.getElementById('loginScreen').style.display = 'flex';
+    }
+
+    function switchAdminTab(tab) {
+      document.querySelectorAll('#adminDashboard .tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+
+      ['QR', 'MAP', 'CATALOG', 'STAFF', 'REPORTS'].forEach(t => {
+        document.getElementById(`tab${t}`).style.display = (t === tab) ? 'block' : 'none';
+      });
+    }
+
+    function generateQRCards() {
+      const grid = document.getElementById('qrCardsGrid');
+      grid.innerHTML = '';
+
+      const tables = [
+        'MESA-01', 'MESA-02', 'MESA-03', 'MESA-04', 'MESA-05',
+        'MESA-06', 'MESA-07', 'MESA-08', 'MESA-09', 'MESA-10',
+        'MESA-11', 'MESA-12', 'MESA-13', 'MESA-14', 'MESA-15'
+      ];
+
+      tables.forEach(table => {
+        const card = document.createElement('div');
+        card.className = 'printable-qr-card';
+        card.style.background = 'rgba(17,24,39,0.8)';
+        card.style.border = '1px solid var(--border-glass)';
+        card.style.borderRadius = 'var(--radius-md)';
+        card.style.padding = '16px';
+        card.style.textAlign = 'center';
+
+        const url = `${window.location.origin}/visitor?table=${table}`;
+
+        card.innerHTML = `
+          <div style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">
+            RESTAURANTE LA TERRAZA
+          </div>
+          <div class="print-table-title" style="font-family: var(--font-heading); font-weight: 800; font-size: 1.4rem; color: var(--primary); margin: 4px 0 8px 0;">
+            ${table}
+          </div>
+          <div style="background: #ffffff; padding: 10px; border-radius: var(--radius-sm); display: inline-block;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(url)}" alt="QR ${table}" style="width: 140px; height: 140px; display: block; margin: 0 auto;">
+          </div>
+          <div class="print-instruction" style="margin-top: 8px; font-size: 0.8rem; color: var(--text-secondary);">
+            📱 Escanea con la cámara de tu celular para atención instantánea
+          </div>
+          <div style="margin-top: 8px;" class="no-print">
+            <a href="${url}" target="_blank" style="color: var(--primary); font-size: 0.8rem; text-decoration: none; font-weight: 600;">
+              🔗 Abrir enlace de Mesa
+            </a>
+          </div>
+        `;
+
+        grid.appendChild(card);
+      });
+    }
+  </script>
+</body>
+</html>

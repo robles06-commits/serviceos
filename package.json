@@ -1,0 +1,22 @@
+{
+  "name": "@servicehub/monorepo",
+  "version": "1.0.0",
+  "description": "SERVICEHUB — Physical Service Operating System (ServiceOS) Hexagonal & DDD Monorepo",
+  "private": true,
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "node tests/foundation_sprint.js",
+    "lint": "eslint src/**/*.ts",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
+  "keywords": [
+    "serviceos",
+    "ddd",
+    "hexagonal-architecture",
+    "cqrs",
+    "realtime-service-orchestration"
+  ],
+  "author": "ServiceHub Engineering Team",
+  "license": "UNLICENSED"
+}

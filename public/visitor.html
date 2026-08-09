@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ServiceOS — Concierge Digital & Carta en Mesa</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="brand-container">
+      <div class="brand-logo">
+        <span>ServiceOS</span>
+      </div>
+      <span class="logo-badge">PWA VISITANTE</span>
+    </div>
+    <div class="status-pill">
+      <span class="pulse-dot"></span>
+      <span id="locationTag">MESA 14 • PRESENCIA VERIFICADA</span>
+    </div>
+  </header>
+
+  <main class="main-container">
+
+    <!-- Active Request Card & Stepper (Shown when request is in progress) -->
+    <div id="activeRequestPanel" class="glass-card" style="display: none; border-color: var(--primary);">
+      <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span class="section-title">⚡ SOLICITUD EN CURSO</span>
+        <span id="activeStatusBadge" class="time-badge" style="background: rgba(6,182,212,0.15); color: var(--primary); border-color: var(--primary);">Atención en Proceso</span>
+      </div>
+
+      <div style="margin: 16px 0; background: rgba(0,0,0,0.2); padding: 16px; border-radius: var(--radius-md);">
+        <h2 id="activeIntentTitle" style="font-family: var(--font-heading); font-size: 1.4rem; font-weight: 800; color: var(--primary);">Pedir la cuenta</h2>
+        <p id="activeNoteText" style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;"></p>
+        <p id="activeAttendantText" style="color: var(--success); font-weight: 600; margin-top: 8px; font-size: 0.92rem;"></p>
+      </div>
+
+      <!-- Live Stepper Tracker -->
+      <div class="stepper-container">
+        <div class="stepper-line"></div>
+        <div id="stepperLineActive" class="stepper-line-active"></div>
+        
+        <div id="step1" class="step-item active">
+          <div class="step-node">1</div>
+          <span class="step-label">Enviada</span>
+        </div>
+        <div id="step2" class="step-item active">
+          <div class="step-node">2</div>
+          <span class="step-label">Notificada</span>
+        </div>
+        <div id="step3" class="step-item">
+          <div class="step-node">3</div>
+          <span class="step-label">En Camino</span>
+        </div>
+        <div id="step4" class="step-item">
+          <div class="step-node">4</div>
+          <span class="step-label">Entregado</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main View Switcher Bar (Solicitudes vs Carta Digital) -->
+    <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+      <button id="btnViewIntents" class="tab-btn active" style="flex: 1; padding: 14px; font-size: 0.95rem;" onclick="switchMainView('INTENTS')">
+        🛎️ Solicitudes de Atención
+      </button>
+      <button id="btnViewMenu" class="tab-btn" style="flex: 1; padding: 14px; font-size: 0.95rem;" onclick="switchMainView('MENU')">
+        📖 Carta & Menú Digital
+      </button>
+    </div>
+
+    <!-- PANEL 1: SOLICITUDES DE ATENCIÓN DIRECTA (CATÁLOGO EN MESA) -->
+    <div id="catalogPanel" class="glass-card">
+      
+      <div class="section-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <h1 class="section-title" id="welcomeHeaderTitle">¿En qué podemos atenderte en Mesa 14?</h1>
+          <p class="section-subtitle">Toca cualquier opción para notificar al instante a tu mesero de turno.</p>
+        </div>
+        <!-- Preset Type Badge -->
+        <select id="presetSelector" style="background: rgba(30,41,59,0.9); color: var(--primary); border: 1px solid var(--primary); border-radius: var(--radius-sm); padding: 4px 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer;" onchange="applyVenuePreset(this.value)">
+          <option value="CAFE">☕ Modo Cafetería / Café</option>
+          <option value="REST">🍽️ Modo Restaurante</option>
+          <option value="BAR">🍸 Modo Bar / Pub</option>
+        </select>
+      </div>
+
+      <!-- Dynamic Intent Catalog Grid -->
+      <div class="catalog-grid" id="catalogGrid">
+        <!-- Default Intent Cards for Café / General -->
+        <div class="intent-card" onclick="selectAndSubmitIntent('INTENT-BILL', 'Pedir la Cuenta', '💳')">
+          <span class="intent-icon">💳</span>
+          <span class="intent-label">Pedir la Cuenta</span>
+          <span class="intent-sublabel">Boleta o Factura RUT</span>
+        </div>
+
+        <div class="intent-card" onclick="selectAndSubmitIntent('INTENT-WAITER', 'Llamar al Mesero', '🙋‍♂️')">
+          <span class="intent-icon">🙋‍♂️</span>
+          <span class="intent-label">Llamar al Mesero</span>
+          <span class="intent-sublabel">Atención personal en mesa</span>
+        </div>
+
+        <div class="intent-card" onclick="selectAndSubmitIntent('INTENT-CLEAN', 'Limpieza de Mesa', '🧹')">
+          <span class="intent-icon">🧹</span>
+          <span class="intent-label">Limpieza de Mesa</span>
+          <span class="intent-sublabel">Retirar loza o servilletas</span>
+        </div>
+
+        <div class="intent-card" onclick="selectAndSubmitIntent('INTENT-NAPKINS', 'Servilletas / Cubiertos', '🧻')">
+          <span class="intent-icon">🧻</span>
+          <span class="intent-label">Servilletas / Cubiertos</span>
+          <span class="intent-sublabel">Reposición de insumos</span>
+        </div>
+      </div>
+
+      <!-- Quick Note Chips -->
+      <div class="quick-chips-container">
+        <div class="quick-chips-title">Notas Rápidas de 1-Toque (Opcional):</div>
+        <div class="chips-wrapper">
+          <button class="chip-btn" onclick="addQuickChip('Factura con RUT empresa')">📄 Factura RUT</button>
+          <button class="chip-btn" onclick="addQuickChip('Sin Hielo')">🚫 Sin Hielo</button>
+          <button class="chip-btn" onclick="addQuickChip('Servilletas extras')">🧻 Servilletas</button>
+          <button class="chip-btn" onclick="addQuickChip('Mesa sucia')">✨ Limpiar Mesa</button>
+        </div>
+      </div>
+
+      <!-- Optional Custom Note Input -->
+      <div style="margin-top: 16px;">
+        <input type="text" id="visitorNote" class="note-input" placeholder="Escribe un detalle opcional (ej. Factura RUT, vaso con agua...)" maxlength="80">
+      </div>
+
+    </div>
+
+    <!-- PANEL 2: CARTA & MENÚ DIGITAL INTERACTIVO -->
+    <div id="digitalMenuPanel" class="glass-card" style="display: none;">
+      
+      <div class="section-header">
+        <h1 class="section-title">📖 Carta & Menú Digital</h1>
+        <p class="section-subtitle">Explora las especialidades de la casa. Toca cualquier producto para solicitar la atención de tu mesero.</p>
+      </div>
+
+      <!-- Menu Sub-Category Tabs -->
+      <div class="category-tabs">
+        <button class="tab-btn active" onclick="filterMenuCategory('ALL')">✨ Todo el Menú</button>
+        <button class="tab-btn" onclick="filterMenuCategory('CAFES')">☕ Cafetería & Calientes</button>
+        <button class="tab-btn" onclick="filterMenuCategory('PASTRY')">🥐 Pastelería & Dulces</button>
+        <button class="tab-btn" onclick="filterMenuCategory('SANDWICH')">🥪 Sándwiches & Salados</button>
+        <button class="tab-btn" onclick="filterMenuCategory('DRINKS')">🥤 Bebidas Frías & Jugos</button>
+      </div>
+
+      <!-- Digital Menu Grid -->
+      <div id="menuItemsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px;">
+        
+        <!-- Item 1 -->
+        <div class="menu-item-card" data-menucat="CAFES" style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-size: 2rem;">☕</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: var(--primary);">$2.800</span>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-top: 8px;">Cappuccino Italiano</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Espresso de grano arábica, leche cremada y toque de cacao amargo.</p>
+          </div>
+          <button class="btn-action btn-secondary" style="margin-top: 14px; padding: 10px; font-size: 0.85rem;" onclick="orderMenuItem('Cappuccino Italiano')">
+            🛎️ Consultar con Mesero
+          </button>
+        </div>
+
+        <!-- Item 2 -->
+        <div class="menu-item-card" data-menucat="CAFES" style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-size: 2rem;">☕</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: var(--primary);">$2.200</span>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-top: 8px;">Espresso Doble</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Extracción intensa de grano recién tostado (100% Arábica).</p>
+          </div>
+          <button class="btn-action btn-secondary" style="margin-top: 14px; padding: 10px; font-size: 0.85rem;" onclick="orderMenuItem('Espresso Doble')">
+            🛎️ Consultar con Mesero
+          </button>
+        </div>
+
+        <!-- Item 3 -->
+        <div class="menu-item-card" data-menucat="PASTRY" style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-size: 2rem;">🥐</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: var(--primary);">$2.500</span>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-top: 8px;">Croissant Mantequilla Artisan</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Masa hojaldrada horneada diariamente con mantequilla francesa.</p>
+          </div>
+          <button class="btn-action btn-secondary" style="margin-top: 14px; padding: 10px; font-size: 0.85rem;" onclick="orderMenuItem('Croissant Mantequilla')">
+            🛎️ Consultar con Mesero
+          </button>
+        </div>
+
+        <!-- Item 4 -->
+        <div class="menu-item-card" data-menucat="SANDWICH" style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-size: 2rem;">🥪</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: var(--primary);">$4.900</span>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-top: 8px;">Sándwich Mechada en Ciabatta</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Carne desmenuzada a la cacerola, queso fundido y palta fresca en ciabatta tostada.</p>
+          </div>
+          <button class="btn-action btn-secondary" style="margin-top: 14px; padding: 10px; font-size: 0.85rem;" onclick="orderMenuItem('Sándwich Mechada')">
+            🛎️ Consultar con Mesero
+          </button>
+        </div>
+
+        <!-- Item 5 -->
+        <div class="menu-item-card" data-menucat="DRINKS" style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-size: 2rem;">🥤</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: var(--primary);">$3.200</span>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-top: 8px;">Jugo Natural de Naranja</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Naranjas valencianas recién exprimidas en el momento.</p>
+          </div>
+          <button class="btn-action btn-secondary" style="margin-top: 14px; padding: 10px; font-size: 0.85rem;" onclick="orderMenuItem('Jugo Naranja Natural')">
+            🛎️ Consultar con Mesero
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    let selectedIntent = null;
+    let currentRequestId = null;
+    let presenceToken = null;
+    let servicePointId = 'MESA-14';
+
+    // 1. EXTRACT DYNAMIC TABLE & TOKEN FROM QR CODE URL (?table=MESA-14)
+    function parseQRUrlParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tableParam = urlParams.get('table') || urlParams.get('point');
+      const tokenParam = urlParams.get('token');
+
+      if (tableParam) {
+        servicePointId = tableParam.toUpperCase();
+      }
+
+      document.getElementById('locationTag').innerText = `${servicePointId} • PRESENCIA VERIFICADA`;
+      document.getElementById('welcomeHeaderTitle').innerText = `¿En qué podemos atenderte en ${servicePointId}?`;
+
+      return tokenParam;
+    }
+
+    // 2. AUTO VERIFY PRESENCE ON LOAD (BC-03)
+    async function verifyPresence() {
+      const qrTokenFromUrl = parseQRUrlParams();
+
+      try {
+        const res = await fetch('/api/presence/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            servicePointId: servicePointId,
+            qrCode: qrTokenFromUrl || `QR-${servicePointId}-SIGNED`
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          presenceToken = data.token;
+          console.log(`Presencia Verificada en ${servicePointId} Token:`, presenceToken);
+        }
+      } catch (err) {
+        console.error("Error en verificación de presencia:", err);
+      }
+    }
+
+    // 3. MAIN VIEW SWITCHER (Intents vs Digital Menu)
+    function switchMainView(view) {
+      const catalogPanel = document.getElementById('catalogPanel');
+      const digitalMenuPanel = document.getElementById('digitalMenuPanel');
+      const btnIntents = document.getElementById('btnViewIntents');
+      const btnMenu = document.getElementById('btnViewMenu');
+
+      if (view === 'INTENTS') {
+        catalogPanel.style.display = 'block';
+        digitalMenuPanel.style.display = 'none';
+        btnIntents.classList.add('active');
+        btnMenu.classList.remove('active');
+      } else {
+        catalogPanel.style.display = 'none';
+        digitalMenuPanel.style.display = 'block';
+        btnIntents.classList.remove('active');
+        btnMenu.classList.add('active');
+      }
+    }
+
+    // 4. VENUE PRESETS CUSTOMIZER (BC-02 Admin Selector)
+    function applyVenuePreset(preset) {
+      const grid = document.getElementById('catalogGrid');
+      if (preset === 'CAFE') {
+        grid.innerHTML = `
+          <div class="intent-card" onclick="selectAndSubmitIntent('INTENT-BILL', 'Pedir la Cuenta', '💳')">
+            <span class="intent-icon">💳</span>
+            <span class="intent-label">Pedir la Cuenta</span>
+            <span class="intent-sublabel">Boleta o Factura RUT</span>
+          </div>
+          <div class="intent-card" onclick="selectAndSubmitIntent('INTENT-WAITER', 'Llamar al Mesero', '🙋‍♂️')">
+            <span class="intent-icon">🙋‍♂️</span>
+            <span class="intent-label">Llamar al Mesero</span>
+            <span class="intent-sublabel">Atención personal en mesa</span>
+          </div>
+          <div class="intent-card" onclick="selectAndSubmitIntent('INTENT-CLEAN', 'Limpieza de Mesa', '🧹')">
+            <span class="intent-icon">🧹</span>
+            <span class="intent-label">Limpieza de Mesa</span>
+            <span class="intent-sublabel">Retirar loza o servilletas</span>
+          </div>
+          <div class="intent-card" onclick="selectAndSubmitIntent('INTENT-NAPKINS', 'Servilletas / Cubiertos', '🧻')">
+            <span class="intent-icon">🧻</span>
+            <span class="intent-label">Servilletas / Cubiertos</span>
+            <span class="intent-sublabel">Reposición de insumos</span>
+          </div>
+        `;
+      } else if (preset === 'REST') {
+        grid.innerHTML = `
+          <div class="intent-card" onclick="selectAndSubmitIntent('INTENT-BILL', 'Pedir la Cuenta', '💳')">
+            <span class="intent-icon">💳</span>
+            <span class="intent-label">Pedir la Cuenta</span>
+            <span class="intent-sublabel">Boleta o Factura RUT</span>
+          </div>
+          <div class="intent-card" onclick="selectAndSubmitIntent('INTENT-WATER', 'Solicitar Agua', '💧')">
+            <span class="intent-icon">💧</span>
+            <span class="intent-label">Solicitar Agua</span>
+            <span class="intent-sublabel">Agua mineral o jarra</span>
+          </div>
+          <div class="intent-card" onclick="selectAndSubmitIntent('INTENT-WAITER', 'Llamar al Mesero', '🙋‍♂️')">
+            <span class="intent-icon">🙋‍♂️</span>
+            <span class="intent-label">Llamar al Mesero</span>
+            <span class="intent-sublabel">Atención personal en mesa</span>
+          </div>
+          <div class="intent-card" onclick="selectAndSubmitIntent('INTENT-CLEAN', 'Limpieza de Mesa', '🧹')">
+            <span class="intent-icon">🧹</span>
+            <span class="intent-label">Limpieza de Mesa</span>
+            <span class="intent-sublabel">Retirar platos</span>
+          </div>
+        `;
+      } else if (preset === 'BAR') {
+        grid.innerHTML = `
+          <div class="intent-card" onclick="selectAndSubmitIntent('INTENT-BILL', 'Pedir la Cuenta', '💳')">
+            <span class="intent-icon">💳</span>
+            <span class="intent-label">Pedir la Cuenta</span>
+            <span class="intent-sublabel">Boleta o Factura RUT</span>
+          </div>
+          <div class="intent-card" onclick="selectAndSubmitIntent('INTENT-WAITER', 'Llamar al Mesero', '🙋‍♂️')">
+            <span class="intent-icon">🙋‍♂️</span>
+            <span class="intent-label">Llamar al Mesero</span>
+            <span class="intent-sublabel">Pedir ronda de tragos</span>
+          </div>
+          <div class="intent-card" onclick="selectAndSubmitIntent('INTENT-ICE', 'Traer Hielo / Servilletas', '🧊')">
+            <span class="intent-icon">🧊</span>
+            <span class="intent-label">Traer Hielo</span>
+            <span class="intent-sublabel">Reposición en barra</span>
+          </div>
+          <div class="intent-card" onclick="selectAndSubmitIntent('INTENT-CLEAN', 'Limpieza de Barra', '🧹')">
+            <span class="intent-icon">🧹</span>
+            <span class="intent-label">Limpieza de Barra</span>
+            <span class="intent-sublabel">Retirar vasos vacíos</span>
+          </div>
+        `;
+      }
+    }
+
+    // 5. MENU DIGITAL CATEGORY FILTER
+    function filterMenuCategory(cat) {
+      document.querySelectorAll('#digitalMenuPanel .tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+
+      const items = document.querySelectorAll('.menu-item-card');
+      items.forEach(item => {
+        if (cat === 'ALL' || item.getAttribute('data-menucat') === cat) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    }
+
+    // 6. ORDER FROM DIGITAL MENU ITEM
+    function orderMenuItem(itemName) {
+      document.getElementById('visitorNote').value = `Consulta: ${itemName}`;
+      switchMainView('INTENTS');
+      selectAndSubmitIntent('INTENT-WAITER', `Llamar por ${itemName}`, '🙋‍♂️');
+    }
+
+    // 7. QUICK CHIP AUTO-FILL
+    function addQuickChip(text) {
+      const input = document.getElementById('visitorNote');
+      input.value = text;
+      document.querySelectorAll('.chip-btn').forEach(c => c.classList.remove('selected'));
+      event.currentTarget.classList.add('selected');
+    }
+
+    // 8. ONE-TAP SUBMIT INTENT COMMAND (BC-01)
+    async function selectAndSubmitIntent(id, title, icon) {
+      selectedIntent = { id, title, icon };
+      if (!presenceToken) await verifyPresence();
+
+      const note = document.getElementById('visitorNote').value;
+      const requestId = 'REQ-' + Math.floor(1000 + Math.random() * 9000);
+
+      try {
+        const res = await fetch('/api/requests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            requestId: requestId,
+            tenantId: 'TENANT-REST-PILOT-01',
+            venueId: 'VENUE-TERRAZA-PILOT-01',
+            servicePointId: servicePointId,
+            intentTypeId: id,
+            intentTypeName: title,
+            note: note,
+            proofToken: presenceToken || `VERIFIED-PRESENCE-${servicePointId}`
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          currentRequestId = requestId;
+          showActiveState(title, note, 'SUBMITTED', 'Buscando personal...');
+        } else if (data.error && (data.error.includes('INV-05') || data.error.includes('already exists'))) {
+          showActiveState(title, 'Ya existe una solicitud activa para esta mesa. El personal viene en camino.', 'SUBMITTED', 'Atención en Proceso');
+        } else {
+          alert('Aviso: ' + (data.error || 'No se pudo procesar la solicitud'));
+        }
+      } catch (err) {
+        alert('Fallo de red al conectar con el servidor');
+      }
+    }
+
+    function showActiveState(intentName, note, state, statusText, attendant) {
+      document.getElementById('catalogPanel').style.display = 'none';
+      document.getElementById('digitalMenuPanel').style.display = 'none';
+      document.getElementById('activeRequestPanel').style.display = 'block';
+      document.getElementById('activeIntentTitle').innerText = intentName;
+      document.getElementById('activeNoteText').innerText = note ? `"${note}"` : '';
+
+      const badge = document.getElementById('activeStatusBadge');
+      badge.innerText = statusText;
+
+      const attendantText = document.getElementById('activeAttendantText');
+      const stepLine = document.getElementById('stepperLineActive');
+      const step3 = document.getElementById('step3');
+
+      if (attendant || state === 'ACCEPTED') {
+        attendantText.innerText = `👤 ${attendant || 'Sofía (Mesera)'} viene en camino hacia tu mesa.`;
+        stepLine.style.width = '75%';
+        step3.classList.add('active');
+      } else {
+        attendantText.innerText = 'Personal notificado en pantalla. Aguarda un instante.';
+        stepLine.style.width = '40%';
+        step3.classList.remove('active');
+      }
+    }
+
+    // 9. CONFIRM RECEIPT BY VISITOR (PD-001)
+    async function confirmReceipt() {
+      if (!currentRequestId) {
+        location.reload();
+        return;
+      }
+      try {
+        const res = await fetch(`/api/requests/${currentRequestId}/confirm-receipt`, {
+          method: 'POST'
+        });
+        if (res.ok) {
+          const stepLine = document.getElementById('stepperLineActive');
+          const step4 = document.getElementById('step4');
+          stepLine.style.width = '100%';
+          step4.classList.add('completed');
+
+          document.getElementById('activeStatusBadge').innerText = '✓ Servicio Completado';
+          document.getElementById('activeAttendantText').innerText = '¡Gracias por tu visita! Esperamos que disfrutes tu estadía.';
+          
+          setTimeout(() => {
+            location.reload();
+          }, 3000);
+        }
+      } catch (e) {
+        console.error(e);
+        location.reload();
+      }
+    }
+
+    // 10. REALTIME SSE EVENT STREAM LISTENER
+    function connectEventStream() {
+      const evtSource = new EventSource('/api/events');
+      evtSource.onmessage = function(e) {
+        const eventData = JSON.parse(e.data);
+
+        if (currentRequestId && eventData.aggregateId === currentRequestId) {
+          if (eventData.eventName === 'SH-EVT-006: ServiceAcceptedByStaff') {
+            showActiveState(
+              document.getElementById('activeIntentTitle').innerText,
+              document.getElementById('activeNoteText').innerText,
+              'ACCEPTED',
+              'Personal en Camino',
+              eventData.attendantId || 'Sofía (Mesera)'
+            );
+          } else if (eventData.eventName === 'SH-EVT-007: ServiceCompletedByStaff' || eventData.eventName === 'SH-EVT-008: ServiceCompletedByVisitor') {
+            document.getElementById('activeStatusBadge').innerText = '✓ Servicio Completado';
+            setTimeout(() => location.reload(), 2500);
+          }
+        }
+      };
+    }
+
+    window.onload = function() {
+      verifyPresence();
+      connectEventStream();
+    };
+  </script>
+</body>
+</html>

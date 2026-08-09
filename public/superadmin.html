@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ServiceOS — Portal de SuperAdmin SaaS Multi-Tenant</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="brand-container">
+      <div class="brand-logo">
+        <span>ServiceOS</span>
+      </div>
+      <span class="logo-badge" style="background: rgba(239,68,68,0.15); color: var(--danger); border-color: rgba(239,68,68,0.3);">SUPERADMIN SAAS PORTAL</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <span style="font-size: 0.88rem; color: var(--text-secondary);">superadmin@servicehub.com</span>
+      <button class="chip-btn" onclick="location.href='/login'">🚪 Salir</button>
+    </div>
+  </header>
+
+  <main class="main-container" style="max-width: 1200px;">
+
+    <!-- Top Executive SaaS Metrics -->
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-icon" style="background: rgba(6,182,212,0.15); color: var(--primary);">🏪</div>
+        <div class="metric-data">
+          <div class="value" id="metricActiveTenants">3 Local(es)</div>
+          <div class="label">Establecimientos Activos</div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon" style="background: rgba(16,185,129,0.15); color: var(--success);">💳</div>
+        <div class="metric-data">
+          <div class="value" id="metricMRR">$149.700 / mes</div>
+          <div class="label">Ingreso Recurrente SaaS</div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon" style="background: rgba(245,158,11,0.15); color: var(--warning);">⚡</div>
+        <div class="metric-data">
+          <div class="value" id="metricTotalSystemReqs">1.480</div>
+          <div class="label">Solicitudes Procesadas Globales</div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon" style="background: rgba(99,102,241,0.15); color: var(--accent);">📡</div>
+        <div class="metric-data">
+          <div class="value" style="font-size: 1.1rem; color: var(--success);">99.9% ONLINE</div>
+          <div class="label">Disponibilidad Multi-Tenant</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions Bar: Create New Tenant -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <div>
+        <h1 class="section-title">🏢 Gestión de Establecimientos (Tenants SaaS)</h1>
+        <p class="section-subtitle">Crea nuevas cuentas de negocios y entrega accesos a cada restaurante o cafetería.</p>
+      </div>
+      <button class="btn-action btn-primary" style="width: auto; padding: 12px 24px;" onclick="openNewTenantModal()">
+        ➕ Crear Nuevo Restaurante / Cliente
+      </button>
+    </div>
+
+      <!-- TAB 1: COMMERCIAL PLANS PRICING MATRIX -->
+      <div id="tabPLANS" class="glass-card">
+        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h2 class="section-title">💎 Matriz Diferenciada de Planes SaaS ServiceOS ($ USD)</h2>
+            <p class="section-subtitle">Precios comerciales configurables en Dólares Americanos ($ USD) con diferenciación clara.</p>
+          </div>
+          <button class="btn-action btn-primary" style="width: auto; padding: 10px 20px; font-size: 0.9rem;" onclick="openEditPricesModal()">
+            ✏️ Editar Precios de Paquetes ($ USD)
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px;">
+          
+          <!-- PLAN 1: STARTER -->
+          <div style="background: rgba(17,24,39,0.7); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 24px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <span class="time-badge" style="background: rgba(6,182,212,0.15); color: var(--primary);">PILOTO GRATIS</span>
+              <h3 style="font-family: var(--font-heading); font-size: 1.6rem; font-weight: 800; margin-top: 12px;">Plan Starter</h3>
+              <div style="font-size: 2rem; font-weight: 800; color: var(--primary); margin: 8px 0;" id="priceDisplayStarter">$0 <span style="font-size: 0.9rem; font-weight: 400; color: var(--text-muted);">USD / 30 días</span></div>
+              <p style="font-size: 0.85rem; color: var(--text-secondary);">Para cafeterías pequeñas que desean probar la tecnología sin costo.</p>
+              
+              <hr style="border: none; border-top: 1px solid var(--border-glass); margin: 16px 0;">
+
+              <ul style="list-style: none; font-size: 0.88rem; color: var(--text-main); display: flex; flex-direction: column; gap: 10px;">
+                <li>✓ Hasta <strong>5 Mesas</strong> habilitadas</li>
+                <li>✓ 1 Mesero / Tablet en turno</li>
+                <li>✓ Concierge PWA en 1-Toque</li>
+                <li>✓ Alerta Sonora Local en Tablet</li>
+                <li style="color: var(--text-muted); text-decoration: line-through;">✕ Menú Digital con Fotos y Precios</li>
+                <li style="color: var(--text-muted); text-decoration: line-through;">✕ Medición SLA y Tiempos en Pantalla</li>
+                <li style="color: var(--text-muted); text-decoration: line-through;">✕ Alertas de Escalación a Supervisor</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- PLAN 2: PRO (DESTACADO) -->
+          <div style="background: rgba(6,182,212,0.08); border: 2px solid var(--primary); border-radius: var(--radius-lg); padding: 24px; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+            <div style="position: absolute; top: -12px; right: 20px; background: var(--primary-gradient); color: #fff; padding: 2px 12px; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 800;">RECOMENDADO</div>
+            <div>
+              <span class="time-badge" style="background: rgba(16,185,129,0.15); color: var(--success);">EL MÁS POPULAR</span>
+              <h3 style="font-family: var(--font-heading); font-size: 1.6rem; font-weight: 800; margin-top: 12px;">Plan Pro Business</h3>
+              <div style="font-size: 2rem; font-weight: 800; color: var(--success); margin: 8px 0;" id="priceDisplayPro">$49 <span style="font-size: 0.9rem; font-weight: 400; color: var(--text-muted);">USD / mes</span></div>
+              <p style="font-size: 0.85rem; color: var(--text-secondary);">Para restaurantes y bistro que buscan acelerar la rotación de mesas y vender más.</p>
+              
+              <hr style="border: none; border-top: 1px solid var(--border-glass); margin: 16px 0;">
+
+              <ul style="list-style: none; font-size: 0.88rem; color: var(--text-main); display: flex; flex-direction: column; gap: 10px;">
+                <li>✓ Hasta <strong>20 Mesas</strong> habilitadas</li>
+                <li>✓ Hasta 4 Meseros simultáneos</li>
+                <li>✓ 📖 <strong>Carta & Menú Digital Interactivo</strong></li>
+                <li>✓ ☕ Personalizador por Modo (Café, Rest, Bar)</li>
+                <li>✓ ⏱️ <strong>Cronómetro SLA en Pantalla (`⏱️ Hace X min`)</strong></li>
+                <li>✓ 🌿 Soporte Multizona (Terraza, Comedor, Barra)</li>
+                <li>✓ 📡 Resiliencia ante caídas de WiFi (`PD-002`)</li>
+                <li style="color: var(--text-muted); text-decoration: line-through;">✕ Escalación Crítica Parpadeante</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- PLAN 3: ENTERPRISE -->
+          <div style="background: rgba(17,24,39,0.7); border: 1px solid var(--accent); border-radius: var(--radius-lg); padding: 24px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <span class="time-badge" style="background: rgba(99,102,241,0.15); color: var(--accent);">FULL MULTI-LOCAL</span>
+              <h3 style="font-family: var(--font-heading); font-size: 1.6rem; font-weight: 800; margin-top: 12px;">Plan Enterprise</h3>
+              <div style="font-size: 2rem; font-weight: 800; color: var(--accent); margin: 8px 0;" id="priceDisplayEnterprise">$99 <span style="font-size: 0.9rem; font-weight: 400; color: var(--text-muted);">USD / mes</span></div>
+              <p style="font-size: 0.85rem; color: var(--text-secondary);">Para cadenas de restaurantes, hoteles y bares de alto tráfico.</p>
+              
+              <hr style="border: none; border-top: 1px solid var(--border-glass); margin: 16px 0;">
+
+              <ul style="list-style: none; font-size: 0.88rem; color: var(--text-main); display: flex; flex-direction: column; gap: 10px;">
+                <li>✓ 👑 <strong>Mesas y Puntos Ilimitados</strong></li>
+                <li>✓ Staff y Supervisores Ilimitados</li>
+                <li>✓ Todo lo del Plan Pro +</li>
+                <li>✓ 🚨 <strong>Escalación Crítica Parpadeante en Rojo (`BC-05`)</strong></li>
+                <li>✓ 📊 <strong>Reportes de Rendimiento y MTTR Exportables</strong></li>
+                <li>✓ 🏢 Administración Multi-Local Centralizada</li>
+                <li>✓ 🎧 Soporte VIP 24/7 y Capacitación Asistida</li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    <!-- Tenant Directory Table -->
+    <div class="glass-card">
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+        <thead>
+          <tr style="border-bottom: 1px solid var(--border-glass); text-align: left; color: var(--text-secondary);">
+            <th style="padding: 14px;">Establecimiento / Cliente</th>
+            <th style="padding: 14px;">Tipo de Local</th>
+            <th style="padding: 14px;">Plan SaaS</th>
+            <th style="padding: 14px;">Mesas</th>
+            <th style="padding: 14px;">Administrador</th>
+            <th style="padding: 14px; text-align: right;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tenantsTableBody">
+          <!-- Tenant Row: La Biblioteca del Café -->
+          <tr style="border-bottom: 1px solid var(--border-glass);">
+            <td style="padding: 14px; font-weight: 700; color: #f59e0b;">
+              📚 La Biblioteca del Café
+              <div style="font-size: 0.75rem; color: var(--text-muted);">ID: TENANT-BIBLIOTECA-CAFE</div>
+            </td>
+            <td style="padding: 14px;">☕ Cafetería & Métodos</td>
+            <td style="padding: 14px;"><span class="time-badge" style="background: rgba(16,185,129,0.15); color: var(--success); border-color: var(--success);">PLAN PRO</span></td>
+            <td style="padding: 14px;">12 Mesas</td>
+            <td style="padding: 14px;">gerencia@labibliotecacafe.sv</td>
+            <td style="padding: 14px; text-align: right;">
+              <a href="/biblioteca?table=MESA-04" target="_blank" class="chip-btn" style="color: #f59e0b; border-color: #f59e0b; text-decoration: none;">
+                ☕ Abrir Menú PWA
+              </a>
+            </td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--border-glass);">
+            <td style="padding: 14px; font-weight: 700; color: var(--primary);">
+              Restaurante La Terraza
+              <div style="font-size: 0.75rem; color: var(--text-muted);">ID: TENANT-REST-PILOT-01</div>
+            </td>
+            <td style="padding: 14px;">🍽️ Restaurante Comedor</td>
+            <td style="padding: 14px;"><span class="time-badge" style="background: rgba(16,185,129,0.15); color: var(--success); border-color: var(--success);">PLAN PRO</span></td>
+            <td style="padding: 14px;">15 Mesas</td>
+            <td style="padding: 14px;">admin@terraza.com</td>
+            <td style="padding: 14px; text-align: right;">
+              <button class="chip-btn" style="color: var(--primary); border-color: var(--primary);" onclick="loginAsTenant('TENANT-REST-PILOT-01', 'Restaurante La Terraza')">
+                🔑 Entrar a su Panel
+              </button>
+            </td>
+          </tr>
+
+          <!-- Tenant Row 2 -->
+          <tr style="border-bottom: 1px solid var(--border-glass);">
+            <td style="padding: 14px; font-weight: 700; color: var(--primary);">
+              Café & Bakery Central
+              <div style="font-size: 0.75rem; color: var(--text-muted);">ID: TENANT-CAFE-02</div>
+            </td>
+            <td style="padding: 14px;">☕ Cafetería / Panadería</td>
+            <td style="padding: 14px;"><span class="time-badge" style="background: rgba(6,182,212,0.15); color: var(--primary); border-color: var(--primary);">PILOTO GRATIS</span></td>
+            <td style="padding: 14px;">8 Mesas</td>
+            <td style="padding: 14px;">contacto@cafecentral.cl</td>
+            <td style="padding: 14px; text-align: right;">
+              <button class="chip-btn" style="color: var(--primary); border-color: var(--primary);" onclick="loginAsTenant('TENANT-CAFE-02', 'Café & Bakery Central')">
+                🔑 Entrar a su Panel
+              </button>
+            </td>
+          </tr>
+
+          <!-- Tenant Row 3 -->
+          <tr style="border-bottom: 1px solid var(--border-glass);">
+            <td style="padding: 14px; font-weight: 700; color: var(--primary);">
+              Bistro & Bar La Estación
+              <div style="font-size: 0.75rem; color: var(--text-muted);">ID: TENANT-BAR-03</div>
+            </td>
+            <td style="padding: 14px;">🍸 Bar & Lounge</td>
+            <td style="padding: 14px;"><span class="time-badge" style="background: rgba(99,102,241,0.15); color: var(--accent); border-color: var(--accent);">ENTERPRISE</span></td>
+            <td style="padding: 14px;">25 Mesas</td>
+            <td style="padding: 14px;">gerencia@laestacion.cl</td>
+            <td style="padding: 14px; text-align: right;">
+              <button class="chip-btn" style="color: var(--primary); border-color: var(--primary);" onclick="loginAsTenant('TENANT-BAR-03', 'Bistro & Bar La Estación')">
+                🔑 Entrar a su Panel
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
+  <!-- MODAL: EDITAR PRECIOS DE PAQUETES ($ USD) -->
+  <div id="editPricesModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); z-index: 200; align-items: center; justify-content: center; padding: 20px;">
+    <div class="glass-card" style="width: 100%; max-width: 440px; border-color: var(--primary);">
+      <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="section-title">✏️ Configurar Precios SaaS ($ USD)</h2>
+        <button class="chip-btn" onclick="closeEditPricesModal()">❌ Cerrar</button>
+      </div>
+
+      <form onsubmit="handleSavePrices(event)">
+        <div style="margin-bottom: 14px;">
+          <label style="font-size: 0.82rem; color: var(--text-secondary);">Plan Starter (Piloto Gratis - $ USD)</label>
+          <input type="number" step="0.01" min="0" id="inputPriceStarter" class="note-input" value="0.00" required style="margin-top: 4px;">
+        </div>
+
+        <div style="margin-bottom: 14px;">
+          <label style="font-size: 0.82rem; color: var(--text-secondary);">Plan Pro Business (Precio Mensual $ USD)</label>
+          <input type="number" step="0.01" min="0" id="inputPricePro" class="note-input" value="49.99" required style="margin-top: 4px;">
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <label style="font-size: 0.82rem; color: var(--text-secondary);">Plan Enterprise (Precio Mensual $ USD)</label>
+          <input type="number" step="0.01" min="0" id="inputPriceEnterprise" class="note-input" value="99.99" required style="margin-top: 4px;">
+        </div>
+
+        <button type="submit" class="btn-action btn-primary">
+          💾 Guardar Nuevos Precios ($ USD)
+        </button>
+      </form>
+    </div>
+  </div>
+  <div id="newTenantModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); z-index: 200; align-items: center; justify-content: center; padding: 20px;">
+    <div class="glass-card" style="width: 100%; max-width: 500px; border-color: var(--primary);">
+      <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="section-title">➕ Alta de Nuevo Establecimiento</h2>
+        <button class="chip-btn" onclick="closeNewTenantModal()">❌ Cerrar</button>
+      </div>
+
+      <form onsubmit="handleCreateTenant(event)">
+        <div style="margin-bottom: 14px;">
+          <label style="font-size: 0.82rem; color: var(--text-secondary);">Nombre del Restaurante / Local</label>
+          <input type="text" id="tenantName" class="note-input" placeholder="ej. Pizzería Bella Italia" required style="margin-top: 4px;">
+        </div>
+
+        <div style="margin-bottom: 14px;">
+          <label style="font-size: 0.82rem; color: var(--text-secondary);">Tipo de Establecimiento</label>
+          <select id="tenantType" class="note-input" style="margin-top: 4px; font-weight: 600;">
+            <option value="CAFETERIA">☕ Cafetería / Panadería</option>
+            <option value="RESTAURANTE">🍽️ Restaurante Comedor</option>
+            <option value="BAR">🍸 Bar / Pub / Discoteque</option>
+            <option value="HOTEL">🏨 Hotel / Room Service</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom: 14px;">
+          <label style="font-size: 0.82rem; color: var(--text-secondary);">Correo Administrador del Cliente</label>
+          <input type="email" id="tenantAdminEmail" class="note-input" placeholder="gerente@cliente.com" required style="margin-top: 4px;">
+        </div>
+
+        <div style="margin-bottom: 14px;">
+          <label style="font-size: 0.82rem; color: var(--text-secondary);">Contraseña para su Panel</label>
+          <input type="password" id="tenantAdminPassword" class="note-input" value="cliente123" required style="margin-top: 4px;">
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <label style="font-size: 0.82rem; color: var(--text-secondary);">Plan Comercial SaaS</label>
+          <select id="tenantPlan" class="note-input" style="margin-top: 4px; font-weight: 600;">
+            <option value="PILOTO">🎁 Piloto Gratis (30 Días)</option>
+            <option value="PRO">⚡ Plan Pro ($49.900 / mes)</option>
+            <option value="ENTERPRISE">👑 Plan Enterprise ($99.900 / mes)</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-action btn-primary">
+          ✨ Dar de Alta e Iniciar Cliente
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let currentPrices = { starter: 0, pro: 49, enterprise: 99 };
+
+    function openEditPricesModal() {
+      document.getElementById('editPricesModal').style.display = 'flex';
+      document.getElementById('inputPriceStarter').value = currentPrices.starter;
+      document.getElementById('inputPricePro').value = currentPrices.pro;
+      document.getElementById('inputPriceEnterprise').value = currentPrices.enterprise;
+    }
+
+    function closeEditPricesModal() {
+      document.getElementById('editPricesModal').style.display = 'none';
+    }
+
+    function handleSavePrices(e) {
+      e.preventDefault();
+      const starter = parseFloat(document.getElementById('inputPriceStarter').value) || 0;
+      const pro = parseFloat(document.getElementById('inputPricePro').value) || 49.99;
+      const enterprise = parseFloat(document.getElementById('inputPriceEnterprise').value) || 99.99;
+
+      currentPrices = { starter, pro, enterprise };
+
+      document.getElementById('priceDisplayStarter').innerHTML = `$${starter.toFixed(2)} <span style="font-size: 0.9rem; font-weight: 400; color: var(--text-muted);">USD / 30 días</span>`;
+      document.getElementById('priceDisplayPro').innerHTML = `$${pro.toFixed(2)} <span style="font-size: 0.9rem; font-weight: 400; color: var(--text-muted);">USD / mes</span>`;
+      document.getElementById('priceDisplayEnterprise').innerHTML = `$${enterprise.toFixed(2)} <span style="font-size: 0.9rem; font-weight: 400; color: var(--text-muted);">USD / mes</span>`;
+
+      // Update MRR metric
+      const totalMRR = (pro + enterprise).toFixed(2);
+      document.getElementById('metricMRR').innerText = `$${totalMRR} USD / mes`;
+
+      closeEditPricesModal();
+      alert(`¡Precios de paquetes actualizados exitosamente en Dólares Americanos ($ USD)!`);
+    }
+    function switchAdminTab(tab) {
+      document.querySelectorAll('#adminDashboard .tab-btn, .category-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+
+      ['PLANS', 'TENANTS', 'QR', 'REPORTS'].forEach(t => {
+        const el = document.getElementById(`tab${t}`);
+        if (el) el.style.display = (t === tab) ? 'block' : 'none';
+      });
+    }
+
+    function openNewTenantModal() {
+      document.getElementById('newTenantModal').style.display = 'flex';
+    }
+
+    function closeNewTenantModal() {
+      document.getElementById('newTenantModal').style.display = 'none';
+    }
+
+    function loginAsTenant(tenantId, tenantName) {
+      localStorage.setItem('activeTenantId', tenantId);
+      localStorage.setItem('activeTenantName', tenantName);
+      location.href = `/tenant?id=${tenantId}`;
+    }
+
+    function handleCreateTenant(e) {
+      e.preventDefault();
+      const name = document.getElementById('tenantName').value;
+      const type = document.getElementById('tenantType').value;
+      const email = document.getElementById('tenantAdminEmail').value;
+      const plan = document.getElementById('tenantPlan').value;
+
+      const tenantId = 'TENANT-' + Math.floor(1000 + Math.random() * 9000);
+
+      const table = document.getElementById('tenantsTableBody');
+      const row = document.createElement('tr');
+      row.style.borderBottom = '1px solid var(--border-glass)';
+      row.innerHTML = `
+        <td style="padding: 14px; font-weight: 700; color: var(--primary);">
+          ${name}
+          <div style="font-size: 0.75rem; color: var(--text-muted);">ID: ${tenantId}</div>
+        </td>
+        <td style="padding: 14px;">${type}</td>
+        <td style="padding: 14px;"><span class="time-badge" style="background: rgba(16,185,129,0.15); color: var(--success); border-color: var(--success);">${plan}</span></td>
+        <td style="padding: 14px;">10 Mesas</td>
+        <td style="padding: 14px;">${email}</td>
+        <td style="padding: 14px; text-align: right;">
+          <button class="chip-btn" style="color: var(--primary); border-color: var(--primary);" onclick="loginAsTenant('${tenantId}', '${name}')">
+            🔑 Entrar a su Panel
+          </button>
+        </td>
+      `;
+
+      table.prepend(row);
+      closeNewTenantModal();
+      alert(`¡Establecimiento '${name}' creado exitosamente! Credenciales de acceso listas.`);
+    }
+  </script>
+</body>
+</html>

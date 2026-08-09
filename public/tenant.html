@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ServiceOS — Panel del Cliente / Restaurante</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="brand-container">
+      <div class="brand-logo">
+        <span>ServiceOS</span>
+      </div>
+      <span class="logo-badge" style="background: rgba(6,182,212,0.15); color: var(--primary); border-color: rgba(6,182,212,0.3);" id="tenantBadgeHeader">PANEL DE RESTAURANTE</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <span style="font-weight: 700; color: var(--text-main);" id="tenantNameHeader">Restaurante La Terraza</span>
+      <button class="chip-btn" onclick="location.href='/superadmin'">⬅️ Volver a SuperAdmin</button>
+    </div>
+  </header>
+
+  <main class="main-container" style="max-width: 1200px;">
+
+    <!-- Top Executive Summary for Tenant -->
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-icon" style="background: rgba(6,182,212,0.15); color: var(--primary);">🖨️</div>
+        <div class="metric-data">
+          <div class="value" id="tenantMetricPoints">12 Mesas</div>
+          <div class="label">Puntos Físicos Habilitados</div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon" style="background: rgba(16,185,129,0.15); color: var(--success);">👥</div>
+        <div class="metric-data">
+          <div class="value" id="tenantMetricStaff">3 Meseros</div>
+          <div class="label">Personal en Turno Hoy</div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon" style="background: rgba(245,158,11,0.15); color: var(--warning);">⚡</div>
+        <div class="metric-data">
+          <div class="value" id="tenantMetricOrders">48</div>
+          <div class="label">Atenciones del Día</div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon" style="background: rgba(99,102,241,0.15); color: var(--accent);">⏱️</div>
+        <div class="metric-data">
+          <div class="value" style="color: var(--success);">1.1 min</div>
+          <div class="label">Tiempo Medio Respuesta</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tenant Navigation Tabs -->
+    <div class="category-tabs" style="margin-bottom: 24px;">
+      <button class="tab-btn active" onclick="switchTenantTab('QR')">🖨️ Imprimir Códigos QR</button>
+      <button class="tab-btn" onclick="switchTenantTab('CATALOG')">☕ Personalizar Carta & Intenciones</button>
+      <button class="tab-btn" onclick="switchTenantTab('STAFF')">👥 Mi Personal de Sala</button>
+      <button class="tab-btn" onclick="switchTenantTab('LINKS')">📱 Enlaces para Dispositivos</button>
+    </div>
+
+    <!-- TAB 1: QR CODE GENERATOR & PRINT ENGINE FOR TENANT -->
+    <div id="tabQR" class="glass-card">
+      <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <h2 class="section-title">🖨️ Códigos QR Impresos para Tus Mesas</h2>
+          <p class="section-subtitle">Cada mesa cuenta con un enlace único y firma presencial criptográfica.</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-action btn-primary" style="width: auto; padding: 10px 18px; font-size: 0.9rem;" onclick="openNewTableModal()">
+            ➕ Agregar Nueva Mesa
+          </button>
+          <button class="btn-action btn-secondary" style="width: auto; padding: 10px 18px; font-size: 0.9rem;" onclick="window.print()">
+            🖨️ Imprimir Todos los QR
+          </button>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 20px;" id="tenantQRCardsGrid">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
+
+    <!-- TAB 2: CATALOG & INTENT CUSTOMIZER -->
+    <div id="tabCATALOG" class="glass-card" style="display: none;">
+      <div class="section-header">
+        <h2 class="section-title">☕ Personalización del Catálogo en Mesa</h2>
+        <p class="section-subtitle">Selecciona las opciones que verán tus clientes al escanear el QR.</p>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <label style="font-weight: 700; color: var(--text-main);">Seleccionar Modo de Atención:</label>
+        <select class="note-input" style="margin-top: 8px; font-weight: 700;" onchange="alert('Catálogo guardado para tu local')">
+          <option value="CAFE">☕ Modo Cafetería / Café</option>
+          <option value="REST" selected>🍽️ Modo Restaurante Comedor</option>
+          <option value="BAR">🍸 Modo Bar / Pub / Lounge</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- TAB 3: STAFF ROSTER -->
+    <div id="tabSTAFF" class="glass-card" style="display: none;">
+      <div class="section-header">
+        <h2 class="section-title">👥 Equipo de Meseros & Zonas</h2>
+        <p class="section-subtitle">Personal activo con acceso a las tablets de salón.</p>
+      </div>
+
+      <div style="margin-top: 16px;">
+        <div style="padding: 12px; border-bottom: 1px solid var(--border-glass); display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-weight: 700;">Sofía (Mesero 01)</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Asignado a: Terraza Exterior</div>
+          </div>
+          <span class="time-badge" style="background: rgba(16,185,129,0.15); color: var(--success);">EN TURNO</span>
+        </div>
+
+        <div style="padding: 12px; border-bottom: 1px solid var(--border-glass); display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-weight: 700;">Pedro (Mesero 02)</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Asignado a: Comedor Principal</div>
+          </div>
+          <span class="time-badge" style="background: rgba(16,185,129,0.15); color: var(--success);">EN TURNO</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: DIRECT DEVICE ACCESS LINKS & MOBILE APP DOWNLOAD -->
+    <div id="tabLINKS" class="glass-card" style="display: none;">
+      <div class="section-header">
+        <h2 class="section-title">📱 Instalación de App Móvil & Enlaces de Operación</h2>
+        <p class="section-subtitle">Descarga la aplicación en tus smartphones y tablets o abre los accesos directos.</p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+        <div style="background: rgba(0,0,0,0.25); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-glass);">
+          <h3 style="color: var(--primary);">📲 Instalación Directa PWA (iOS & Android)</h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 6px;">
+            Abre este sitio en Safari (iPhone) o Chrome (Android) y selecciona <strong>"Añadir a la pantalla de inicio"</strong>. La App se instalará con ícono propio sin pasar por la tienda.
+          </p>
+          <button class="btn-action btn-primary" style="margin-top: 14px; font-size: 0.9rem; padding: 10px;" onclick="alert('PWA activa. En Safari/Chrome selecciona compartir -> Añadir a la pantalla de inicio')">
+            📱 Añadir a Pantalla de Inicio
+          </button>
+        </div>
+
+        <div style="background: rgba(0,0,0,0.25); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-glass);">
+          <h3 style="color: var(--success);">🍏🍎 Paquetes App Store / Google Play</h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 6px;">
+            Archivos de empaquetado nativo <code>capacitor.config.json</code> y <code>manifest.json</code> listos para distribución oficial.
+          </p>
+          <a href="/manifest.json" target="_blank" class="btn-action btn-success" style="margin-top: 14px; text-decoration: none; font-size: 0.9rem; padding: 10px;">
+            📄 Ver Manifiesto PWA Móvil
+          </a>
+        </div>
+
+        <div style="background: rgba(0,0,0,0.25); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-glass);">
+          <h3 style="color: var(--warning);">🖥️ Tablet de Staff Dispatcher</h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 6px;">Abrir en la tablet de los garzones para recibir llamadas sonoras en tiempo real.</p>
+          <a href="/staff" target="_blank" class="btn-action btn-secondary" style="margin-top: 14px; text-decoration: none; font-size: 0.9rem; padding: 10px;">
+            🖥️ Abrir Pantalla de Staff
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL: AGREGAR NUEVA MESA DINÁMICAMENTE -->
+  <div id="newTableModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); z-index: 200; align-items: center; justify-content: center; padding: 20px;">
+    <div class="glass-card" style="width: 100%; max-width: 440px; border-color: var(--primary);">
+      <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="section-title">➕ Agregar Nueva Mesa / Punto</h2>
+        <button class="chip-btn" onclick="closeNewTableModal()">❌ Cerrar</button>
+      </div>
+
+      <form onsubmit="handleCreateTable(event)">
+        <div style="margin-bottom: 14px;">
+          <label style="font-size: 0.82rem; color: var(--text-secondary);">Identificador de Mesa (ej. MESA-11, TERRAZA-04, BARRA-02)</label>
+          <input type="text" id="newTableName" class="note-input" placeholder="ej. MESA-11" required style="margin-top: 4px; text-transform: uppercase;">
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <label style="font-size: 0.82rem; color: var(--text-secondary);">Zona Operativa de Salón</label>
+          <select id="newTableZone" class="note-input" style="margin-top: 4px; font-weight: 600;">
+            <option value="TERRAZA">🌿 Terraza Exterior</option>
+            <option value="SALON" selected>🍽️ Comedor Principal</option>
+            <option value="BARRA">🍸 Barra / Lounge</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-action btn-primary">
+          ✨ Crear Mesa y Generar QR
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function switchTenantTab(tab) {
+      document.querySelectorAll('#adminDashboard .tab-btn, .category-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+
+      ['QR', 'CATALOG', 'STAFF', 'LINKS'].forEach(t => {
+        document.getElementById(`tab${t}`).style.display = (t === tab) ? 'block' : 'none';
+      });
+    }
+
+    function loadTenantData() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tenantId = urlParams.get('id') || localStorage.getItem('activeTenantId') || 'TENANT-REST-PILOT-01';
+      const tenantName = localStorage.getItem('activeTenantName') || 'Restaurante La Terraza';
+
+      document.getElementById('tenantNameHeader').innerText = tenantName;
+      document.getElementById('tenantBadgeHeader').innerText = `TENANT ID: ${tenantId}`;
+
+      generateTenantQRCards(tenantId);
+    }
+
+    let tenantTablesList = ['MESA-01', 'MESA-02', 'MESA-03', 'MESA-04', 'MESA-05', 'MESA-06', 'MESA-07', 'MESA-08', 'MESA-09', 'MESA-10'];
+
+    function openNewTableModal() {
+      document.getElementById('newTableModal').style.display = 'flex';
+    }
+
+    function closeNewTableModal() {
+      document.getElementById('newTableModal').style.display = 'none';
+    }
+
+    function handleCreateTable(e) {
+      e.preventDefault();
+      const rawName = document.getElementById('newTableName').value.trim();
+      const tableName = rawName.toUpperCase();
+      const zone = document.getElementById('newTableZone').value;
+
+      if (!tenantTablesList.includes(tableName)) {
+        tenantTablesList.push(tableName);
+        document.getElementById('tenantMetricPoints').innerText = `${tenantTablesList.length} Mesas`;
+        const tenantId = new URLSearchParams(window.location.search).get('id') || 'TENANT-REST-PILOT-01';
+        generateTenantQRCards(tenantId);
+      }
+
+      closeNewTableModal();
+      document.getElementById('newTableName').value = '';
+      alert(`¡Mesa '${tableName}' agregada con éxito! Su código QR ha sido generado.`);
+    }
+
+    function removeTable(tableName) {
+      if (confirm(`¿Estás seguro de eliminar la ${tableName} de tu local?`)) {
+        tenantTablesList = tenantTablesList.filter(t => t !== tableName);
+        document.getElementById('tenantMetricPoints').innerText = `${tenantTablesList.length} Mesas`;
+        const tenantId = new URLSearchParams(window.location.search).get('id') || 'TENANT-REST-PILOT-01';
+        generateTenantQRCards(tenantId);
+      }
+    }
+
+    function generateTenantQRCards(tenantId) {
+      const grid = document.getElementById('tenantQRCardsGrid');
+      const tenantName = localStorage.getItem('activeTenantName') || 'Restaurante La Terraza';
+      grid.innerHTML = '';
+
+      tenantTablesList.forEach(table => {
+        const card = document.createElement('div');
+        card.className = 'printable-qr-card';
+        card.style.background = 'rgba(17,24,39,0.8)';
+        card.style.border = '1px solid var(--border-glass)';
+        card.style.borderRadius = 'var(--radius-md)';
+        card.style.padding = '16px';
+        card.style.textAlign = 'center';
+        card.style.position = 'relative';
+
+        const url = `${window.location.origin}/visitor?tenant=${tenantId}&table=${table}`;
+
+        card.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;" class="no-print">
+            <span style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">
+              ${tenantName}
+            </span>
+            <button class="chip-btn" style="color: var(--danger); border-color: rgba(239,68,68,0.3); padding: 2px 8px; font-size: 0.75rem;" onclick="removeTable('${table}')">
+              🗑️ Eliminar
+            </button>
+          </div>
+
+          <div class="print-table-title" style="font-family: var(--font-heading); font-weight: 800; font-size: 1.4rem; color: var(--primary); margin: 4px 0 8px 0;">
+            ${table}
+          </div>
+          <div style="background: #ffffff; padding: 10px; border-radius: var(--radius-sm); display: inline-block;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(url)}" alt="QR ${table}" style="width: 140px; height: 140px; display: block; margin: 0 auto;">
+          </div>
+          <div class="print-instruction" style="margin-top: 8px; font-size: 0.8rem; color: var(--text-secondary);">
+            📱 Escanea con la cámara de tu celular para atención instantánea
+          </div>
+          <div style="margin-top: 8px;" class="no-print">
+            <a href="${url}" target="_blank" style="color: var(--primary); font-size: 0.8rem; text-decoration: none; font-weight: 600;">
+              🔗 Abrir enlace de Mesa
+            </a>
+          </div>
+        `;
+
+        grid.appendChild(card);
+      });
+    }
+
+    window.onload = function() {
+      loadTenantData();
+    };
+  </script>
+</body>
+</html>

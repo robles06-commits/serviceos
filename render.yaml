@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: serviceos-pilot
+    env: python
+    buildCommand: ""
+    startCommand: "python3 server.py $PORT"
+    envVars:
+      - key: PORT
+        value: 10000

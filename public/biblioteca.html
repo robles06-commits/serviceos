@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>La Biblioteca del Café — Menú & Concierge Digital</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    :root {
+      --primary: #d97706;
+      --primary-glow: rgba(217, 119, 6, 0.3);
+      --primary-gradient: linear-gradient(135deg, #d97706, #b45309);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="brand-container">
+      <div class="brand-logo" style="background: linear-gradient(135deg, #f59e0b, #d97706); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        <span>📚 La Biblioteca del Café</span>
+      </div>
+      <span class="logo-badge" style="background: rgba(245,158,11,0.15); color: #f59e0b; border-color: rgba(245,158,11,0.3);">MENÚ OFICIAL</span>
+    </div>
+    <div class="status-pill">
+      <span class="pulse-dot" style="background: #f59e0b; box-shadow: 0 0 10px #f59e0b;"></span>
+      <span id="locationTag">MESA 04 • PRESENCIA VERIFICADA</span>
+    </div>
+  </header>
+
+  <main class="main-container">
+
+    <!-- Active Request Card & Stepper (Shown when request is in progress) -->
+    <div id="activeRequestPanel" class="glass-card" style="display: none; border-color: #d97706;">
+      <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span class="section-title">⚡ SOLICITUD EN CURSO</span>
+        <span id="activeStatusBadge" class="time-badge" style="background: rgba(217,119,6,0.15); color: #f59e0b; border-color: #f59e0b;">Atención en Proceso</span>
+      </div>
+
+      <div style="margin: 16px 0; background: rgba(0,0,0,0.2); padding: 16px; border-radius: var(--radius-md);">
+        <h2 id="activeIntentTitle" style="font-family: var(--font-heading); font-size: 1.4rem; font-weight: 800; color: #f59e0b;">Pedir la cuenta</h2>
+        <p id="activeNoteText" style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;"></p>
+        <p id="activeAttendantText" style="color: var(--success); font-weight: 600; margin-top: 8px; font-size: 0.92rem;"></p>
+      </div>
+
+      <!-- Live Stepper Tracker -->
+      <div class="stepper-container">
+        <div class="stepper-line"></div>
+        <div id="stepperLineActive" class="stepper-line-active" style="background: linear-gradient(135deg, #f59e0b, #d97706);"></div>
+        
+        <div id="step1" class="step-item active">
+          <div class="step-node">1</div>
+          <span class="step-label">Enviada</span>
+        </div>
+        <div id="step2" class="step-item active">
+          <div class="step-node">2</div>
+          <span class="step-label">Notificada</span>
+        </div>
+        <div id="step3" class="step-item">
+          <div class="step-node">3</div>
+          <span class="step-label">En Camino</span>
+        </div>
+        <div id="step4" class="step-item">
+          <div class="step-node">4</div>
+          <span class="step-label">Entregado</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main View Switcher Bar -->
+    <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+      <button id="btnViewMenu" class="tab-btn active" style="flex: 1; padding: 14px; font-size: 0.95rem;" onclick="switchMainView('MENU')">
+        📖 Ver Carta & Menú Completo
+      </button>
+      <button id="btnViewIntents" class="tab-btn" style="flex: 1; padding: 14px; font-size: 0.95rem;" onclick="switchMainView('INTENTS')">
+        🛎️ Llamados Rápidos
+      </button>
+    </div>
+
+    <!-- PANEL 1: CARTA & MENÚ DIGITAL COMPLETO DE LA BIBLIOTECA DEL CAFÉ -->
+    <div id="digitalMenuPanel" class="glass-card">
+      
+      <div class="section-header">
+        <h1 class="section-title">📚 Menú de La Biblioteca del Café</h1>
+        <p class="section-subtitle">Explora nuestra carta literaria de especialidad. Toca cualquier producto para solicitar la atención de tu mesero.</p>
+      </div>
+
+      <!-- Menu Sub-Category Tabs -->
+      <div class="category-tabs">
+        <button class="tab-btn active" onclick="filterMenuCategory('ALL')">✨ Todos</button>
+        <button class="tab-btn" onclick="filterMenuCategory('DESAYUNOS')">🍳 Desayunos Literarios</button>
+        <button class="tab-btn" onclick="filterMenuCategory('POSTRES')">🍰 Pasteles & Postres</button>
+        <button class="tab-btn" onclick="filterMenuCategory('CAFES')">☕ Cafés & Métodos</button>
+        <button class="tab-btn" onclick="filterMenuCategory('ICED')">🥤 Bebidas Frías & Smoothies</button>
+        <button class="tab-btn" onclick="filterMenuCategory('TES')">🫖 Tés & Tisanas</button>
+        <button class="tab-btn" onclick="filterMenuCategory('SANDWICHES')">🥪 Sándwiches & Salados</button>
+      </div>
+
+      <!-- Digital Menu Grid -->
+      <div id="menuItemsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;">
+        
+        <!-- --- CATEGORÍA: POSTRES & PASTELES --- -->
+        <div class="menu-item-card" data-menucat="POSTRES" style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-size: 2rem;">🍠</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: #f59e0b;">$4.75</span>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-top: 8px;">Mousse Taro</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Delicioso mousse cremosa de taro con textura suave y dulce aroma.</p>
+          </div>
+          <button class="btn-action btn-secondary" style="margin-top: 14px; padding: 10px; font-size: 0.85rem;" onclick="orderMenuItem('Mousse Taro ($4.75)')">
+            🛎️ Pedir con Mesero
+          </button>
+        </div>
+
+        <div class="menu-item-card" data-menucat="POSTRES" style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-size: 2rem;">🍮</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: #f59e0b;">$4.75</span>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-top: 8px;">Pastel Imposible</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Combinación tradicional de flan cremoso horneado sobre pastel de chocolate.</p>
+          </div>
+          <button class="btn-action btn-secondary" style="margin-top: 14px; padding: 10px; font-size: 0.85rem;" onclick="orderMenuItem('Pastel Imposible ($4.75)')">
+            🛎️ Pedir con Mesero
+          </button>
+        </div>
+
+        <div class="menu-item-card" data-menucat="POSTRES" style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-size: 2rem;">🍰</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: #f59e0b;">$4.75</span>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-top: 8px;">Pastel Red Velvet</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Bizcocho terciopelo rojo con suave cobertura de queso crema.</p>
+          </div>
+          <button class="btn-action btn-secondary" style="margin-top: 14px; padding: 10px; font-size: 0.85rem;" onclick="orderMenuItem('Pastel Red Velvet ($4.75)')">
+            🛎️ Pedir con Mesero
+          </button>
+        </div>
+
+        <div class="menu-item-card" data-menucat="POSTRES" style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-size: 2rem;">🥜</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: #f59e0b;">$4.75</span>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-top: 8px;">Pastel Choco Maní</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Rico bizcocho de chocolate intenso cubierto de crema de maní crujiente.</p>
+          </div>
+          <button class="btn-action btn-secondary" style="margin-top: 14px; padding: 10px; font-size: 0.85rem;" onclick="orderMenuItem('Pastel Choco Maní ($4.75)')">
+            🛎️ Pedir con Mesero
+          </button>
+        </div>
+
+        <div class="menu-item-card" data-menucat="POSTRES" style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-size: 2rem;">🍓</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: #f59e0b;">$4.50</span>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-top: 8px;">Cheesecake Fresa / Avellana</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Cheesecake horneado al estilo New York con topping a elección.</p>
+          </div>
+          <button class="btn-action btn-secondary" style="margin-top: 14px; padding: 10px; font-size: 0.85rem;" onclick="orderMenuItem('Cheesecake ($4.50)')">
+            🛎️ Pedir con Mesero
+          </button>
+        </div>
+
+        <div class="menu-item-card" data-menucat="POSTRES" style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-size: 2rem;">🍮</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: #f59e0b;">$3.95</span>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-top: 8px;">Tres Leches Tradicional</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Bizcocho húmedo bañado en mezcla de tres leches y canela.</p>
+          </div>
+          <button class="btn-action btn-secondary" style="margin-top: 14px; padding: 10px; font-size: 0.85rem;" onclick="orderMenuItem('Tres Leches ($3.95)')">
+            🛎️ Pedir con Mesero
+          </button>
+        </div>
+
+        <!-- --- CATEGORÍA: DESAYUNOS LITERARIOS --- -->
+        <div class="menu-item-card" data-menucat="DESAYUNOS" style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-size: 2rem;">🥖</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: #f59e0b;">$5.75</span>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-top: 8px;">Cuentos de Barro (Salarué)</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Pan ciabatta relleno de frijoles, salchicha italiana, mozzarella, omelette y aguacate con tomatada.</p>
+          </div>
+          <button class="btn-action btn-secondary" style="margin-top: 14px; padding: 10px; font-size: 0.85rem;" onclick="orderMenuItem('Cuentos de Barro ($5.75)')">
+            🛎️ Pedir con Mesero
+          </button>
+        </div>
+
+        <div class="menu-item-card" data-menucat="DESAYUNOS" style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-size: 2rem;">🍳</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: #f59e0b;">$6.25</span>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-top: 8px;">Popol Vuh (Anónimo)</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Dos huevos revueltos o estrellados, crema, frijoles, plátanos, aguacate, chorizo y nachos.</p>
+          </div>
+          <button class="btn-action btn-secondary" style="margin-top: 14px; padding: 10px; font-size: 0.85rem;" onclick="orderMenuItem('Popol Vuh ($6.25)')">
+            🛎️ Pedir con Mesero
+          </button>
+        </div>
+
+        <div class="menu-item-card" data-menucat="DESAYUNOS" style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-size: 2rem;">🥑</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: #f59e0b;">$5.75</span>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-top: 8px;">Poesía Completa (Claudia Lars)</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Croissant relleno de aguacate, lechuga, tomate, jamón Virginia, mozzarella y huevos revueltos.</p>
+          </div>
+          <button class="btn-action btn-secondary" style="margin-top: 14px; padding: 10px; font-size: 0.85rem;" onclick="orderMenuItem('Poesía Completa ($5.75)')">
+            🛎️ Pedir con Mesero
+          </button>
+        </div>
+
+        <div class="menu-item-card" data-menucat="DESAYUNOS" style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-size: 2rem;">🧇</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: #f59e0b;">$6.25</span>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-top: 8px;">Waffle El Valle de las Hamacas</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Pechuga de pollo empanizada sobre aguacate y waffle gratinado con ranch y maíz dulce.</p>
+          </div>
+          <button class="btn-action btn-secondary" style="margin-top: 14px; padding: 10px; font-size: 0.85rem;" onclick="orderMenuItem('Waffle Valle Hamacas ($6.25)')">
+            🛎️ Pedir con Mesero
+          </button>
+        </div>
+
+        <!-- --- CATEGORÍA: CAFÉS DE MÉTODOS & CALIENTES --- -->
+        <div class="menu-item-card" data-menucat="CAFES" style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-size: 2rem;">☕</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: #f59e0b;">$3.55 - $4.70</span>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-top: 8px;">Café de Métodos (V60 / Chemex)</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Extracción artesanal en V60, Kalita, Chemex, Aeropress, Prensa Francesa o Cold Brew.</p>
+          </div>
+          <button class="btn-action btn-secondary" style="margin-top: 14px; padding: 10px; font-size: 0.85rem;" onclick="orderMenuItem('Café de Métodos')">
+            🛎️ Pedir con Mesero
+          </button>
+        </div>
+
+        <div class="menu-item-card" data-menucat="CAFES" style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-size: 2rem;">☕</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: #f59e0b;">$3.15 - $4.10</span>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-top: 8px;">Cappuccino de Grano</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Espresso de especialidad con leche cremada y espuma aterciopelada.</p>
+          </div>
+          <button class="btn-action btn-secondary" style="margin-top: 14px; padding: 10px; font-size: 0.85rem;" onclick="orderMenuItem('Cappuccino de Grano')">
+            🛎️ Pedir con Mesero
+          </button>
+        </div>
+
+        <div class="menu-item-card" data-menucat="CAFES" style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-size: 2rem;">🌾</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: #f59e0b;">$3.65 - $4.60</span>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-top: 8px;">Horchata Coffee</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Fusión artesanal de horchata artesanal con shot de espresso de especialidad.</p>
+          </div>
+          <button class="btn-action btn-secondary" style="margin-top: 14px; padding: 10px; font-size: 0.85rem;" onclick="orderMenuItem('Horchata Coffee')">
+            🛎️ Pedir con Mesero
+          </button>
+        </div>
+
+        <!-- --- CATEGORÍA: TÉS & TISANAS --- -->
+        <div class="menu-item-card" data-menucat="TES" style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-size: 2rem;">🫖</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: #f59e0b;">$2.80 - $3.60</span>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-top: 8px;">Chai Negro de India</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Té negro especiado con canela, cardamomo, jengibre y clavos de olor.</p>
+          </div>
+          <button class="btn-action btn-secondary" style="margin-top: 14px; padding: 10px; font-size: 0.85rem;" onclick="orderMenuItem('Chai Negro de India')">
+            🛎️ Pedir con Mesero
+          </button>
+        </div>
+
+        <div class="menu-item-card" data-menucat="TES" style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-size: 2rem;">🌸</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: #f59e0b;">$3.10 - $4.10</span>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-top: 8px;">Tisana Felices Sueños</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Combinación relajante de manzanilla, lavanda, lemongrass y menta (Sin cafeína).</p>
+          </div>
+          <button class="btn-action btn-secondary" style="margin-top: 14px; padding: 10px; font-size: 0.85rem;" onclick="orderMenuItem('Tisana Felices Sueños')">
+            🛎️ Pedir con Mesero
+          </button>
+        </div>
+
+        <!-- --- CATEGORÍA: SÁNDWICHES & LITERATURA --- -->
+        <div class="menu-item-card" data-menucat="SANDWICHES" style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-size: 2rem;">🥪</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: #f59e0b;">$4.95</span>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-top: 8px;">Sándwich Libro de la Selva</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Jamón selva negra, queso mozzarella, lechuga de palmito en pan de la casa.</p>
+          </div>
+          <button class="btn-action btn-secondary" style="margin-top: 14px; padding: 10px; font-size: 0.85rem;" onclick="orderMenuItem('Libro de la Selva ($4.95)')">
+            🛎️ Pedir con Mesero
+          </button>
+        </div>
+
+        <div class="menu-item-card" data-menucat="SANDWICHES" style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-size: 2rem;">🥪</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: #f59e0b;">$4.75</span>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-top: 8px;">Sándwich Tom Sawyer</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Jamón de pavo, queso mozzarella, lechuga de palmito y mostaza dijon.</p>
+          </div>
+          <button class="btn-action btn-secondary" style="margin-top: 14px; padding: 10px; font-size: 0.85rem;" onclick="orderMenuItem('Tom Sawyer ($4.75)')">
+            🛎️ Pedir con Mesero
+          </button>
+        </div>
+
+        <div class="menu-item-card" data-menucat="SANDWICHES" style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <span style="font-size: 2rem;">🏴‍☠️</span>
+              <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.1rem; color: #f59e0b;">$4.95</span>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; margin-top: 8px;">La Isla del Tesoro</h3>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">Jamón virginia gratinado, queso mozzarella, lechuga de palmito y pesto verde.</p>
+          </div>
+          <button class="btn-action btn-secondary" style="margin-top: 14px; padding: 10px; font-size: 0.85rem;" onclick="orderMenuItem('La Isla del Tesoro ($4.95)')">
+            🛎️ Pedir con Mesero
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- PANEL 2: LLAMADOS RÁPIDOS EN MESA -->
+    <div id="catalogPanel" class="glass-card" style="display: none;">
+      <div class="section-header">
+        <h1 class="section-title">🛎️ Atención Instantánea en Mesa</h1>
+        <p class="section-subtitle">Toca cualquier opción para notificar al mesero de tu sala.</p>
+      </div>
+
+      <div class="catalog-grid">
+        <div class="intent-card" onclick="selectAndSubmitIntent('INTENT-BILL', 'Pedir la Cuenta', '💳')">
+          <span class="intent-icon">💳</span>
+          <span class="intent-label">Pedir la Cuenta</span>
+          <span class="intent-sublabel">Efectivo o Tarjeta</span>
+        </div>
+
+        <div class="intent-card" onclick="selectAndSubmitIntent('INTENT-WAITER', 'Llamar al Mesero', '🙋‍♂️')">
+          <span class="intent-icon">🙋‍♂️</span>
+          <span class="intent-label">Llamar al Mesero</span>
+          <span class="intent-sublabel">Atención personal en mesa</span>
+        </div>
+
+        <div class="intent-card" onclick="selectAndSubmitIntent('INTENT-CLEAN', 'Limpieza de Mesa', '🧹')">
+          <span class="intent-icon">🧹</span>
+          <span class="intent-label">Limpieza de Mesa</span>
+          <span class="intent-sublabel">Retirar loza o servilletas</span>
+        </div>
+
+        <div class="intent-card" onclick="selectAndSubmitIntent('INTENT-NAPKINS', 'Servilletas / Cubiertos', '🧻')">
+          <span class="intent-icon">🧻</span>
+          <span class="intent-label">Servilletas / Vasos</span>
+          <span class="intent-sublabel">Reposición en mesa</span>
+        </div>
+      </div>
+
+      <!-- Quick Note Chips -->
+      <div class="quick-chips-container">
+        <div class="quick-chips-title">Notas Rápidas de 1-Toque (Opcional):</div>
+        <div class="chips-wrapper">
+          <button class="chip-btn" onclick="addQuickChip('Sin Hielo')">🚫 Sin Hielo</button>
+          <button class="chip-btn" onclick="addQuickChip('Servilletas extras')">🧻 Servilletas</button>
+          <button class="chip-btn" onclick="addQuickChip('Mesa limpia')">✨ Limpiar Mesa</button>
+        </div>
+      </div>
+
+      <div style="margin-top: 16px;">
+        <input type="text" id="visitorNote" class="note-input" placeholder="Escribe un detalle opcional para tu pedido..." maxlength="80">
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    let selectedIntent = null;
+    let currentRequestId = null;
+    let presenceToken = null;
+    let servicePointId = 'MESA-04';
+
+    function parseQRUrlParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tableParam = urlParams.get('table') || urlParams.get('point');
+      if (tableParam) servicePointId = tableParam.toUpperCase();
+      document.getElementById('locationTag').innerText = `${servicePointId} • PRESENCIA VERIFICADA`;
+      return urlParams.get('token');
+    }
+
+    async function verifyPresence() {
+      const qrTokenFromUrl = parseQRUrlParams();
+      try {
+        const res = await fetch('/api/presence/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            servicePointId: servicePointId,
+            qrCode: qrTokenFromUrl || `QR-${servicePointId}-SIGNED`
+          })
+        });
+        const data = await res.json();
+        if (data.success) presenceToken = data.token;
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function switchMainView(view) {
+      const catalogPanel = document.getElementById('catalogPanel');
+      const digitalMenuPanel = document.getElementById('digitalMenuPanel');
+      const btnIntents = document.getElementById('btnViewIntents');
+      const btnMenu = document.getElementById('btnViewMenu');
+
+      if (view === 'INTENTS') {
+        catalogPanel.style.display = 'block';
+        digitalMenuPanel.style.display = 'none';
+        btnIntents.classList.add('active');
+        btnMenu.classList.remove('active');
+      } else {
+        catalogPanel.style.display = 'none';
+        digitalMenuPanel.style.display = 'block';
+        btnIntents.classList.remove('active');
+        btnMenu.classList.add('active');
+      }
+    }
+
+    function filterMenuCategory(cat) {
+      document.querySelectorAll('#digitalMenuPanel .tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      const items = document.querySelectorAll('.menu-item-card');
+      items.forEach(item => {
+        if (cat === 'ALL' || item.getAttribute('data-menucat') === cat) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    }
+
+    function orderMenuItem(itemName) {
+      document.getElementById('visitorNote').value = `Pedido: ${itemName}`;
+      switchMainView('INTENTS');
+      selectAndSubmitIntent('INTENT-WAITER', `Pedido: ${itemName}`, '🙋‍♂️');
+    }
+
+    function addQuickChip(text) {
+      document.getElementById('visitorNote').value = text;
+    }
+
+    async function selectAndSubmitIntent(id, title, icon) {
+      selectedIntent = { id, title, icon };
+      if (!presenceToken) await verifyPresence();
+
+      const note = document.getElementById('visitorNote').value;
+      const requestId = 'REQ-' + Math.floor(1000 + Math.random() * 9000);
+
+      try {
+        const res = await fetch('/api/requests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            requestId: requestId,
+            tenantId: 'TENANT-BIBLIOTECA-CAFE',
+            venueId: 'VENUE-BIBLIOTECA-01',
+            servicePointId: servicePointId,
+            intentTypeId: id,
+            intentTypeName: title,
+            note: note,
+            proofToken: presenceToken || `VERIFIED-PRESENCE-${servicePointId}`
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          currentRequestId = requestId;
+          showActiveState(title, note, 'SUBMITTED', 'Notificando al mesero...');
+        } else if (data.error && (data.error.includes('INV-05') || data.error.includes('already exists'))) {
+          showActiveState(title, 'Ya existe una solicitud activa para esta mesa. El mesero viene en camino.', 'SUBMITTED', 'Atención en Proceso');
+        } else {
+          alert('Aviso: ' + (data.error || 'No se pudo procesar'));
+        }
+      } catch (err) {
+        alert('Fallo de conexión');
+      }
+    }
+
+    function showActiveState(intentName, note, state, statusText, attendant) {
+      document.getElementById('catalogPanel').style.display = 'none';
+      document.getElementById('digitalMenuPanel').style.display = 'none';
+      document.getElementById('activeRequestPanel').style.display = 'block';
+      document.getElementById('activeIntentTitle').innerText = intentName;
+      document.getElementById('activeNoteText').innerText = note ? `"${note}"` : '';
+
+      const badge = document.getElementById('activeStatusBadge');
+      badge.innerText = statusText;
+
+      const attendantText = document.getElementById('activeAttendantText');
+      const stepLine = document.getElementById('stepperLineActive');
+      const step3 = document.getElementById('step3');
+
+      if (attendant || state === 'ACCEPTED') {
+        attendantText.innerText = `👤 ${attendant || 'Mesero'} viene en camino hacia tu mesa.`;
+        stepLine.style.width = '75%';
+        step3.classList.add('active');
+      } else {
+        attendantText.innerText = 'Mesero notificado en pantalla. Aguarda un instante.';
+        stepLine.style.width = '40%';
+        step3.classList.remove('active');
+      }
+    }
+
+    async function confirmReceipt() {
+      if (!currentRequestId) { location.reload(); return; }
+      try {
+        const res = await fetch(`/api/requests/${currentRequestId}/confirm-receipt`, { method: 'POST' });
+        if (res.ok) {
+          document.getElementById('stepperLineActive').style.width = '100%';
+          document.getElementById('step4').classList.add('completed');
+          document.getElementById('activeStatusBadge').innerText = '✓ Servicio Entregado';
+          setTimeout(() => location.reload(), 2500);
+        }
+      } catch (e) { location.reload(); }
+    }
+
+    window.onload = function() {
+      verifyPresence();
+    };
+  </script>
+</body>
+</html>

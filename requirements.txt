@@ -1,0 +1,2 @@
+# ServiceOS uses Python Standard Library (built-in http.server, json, threading)
+# No external pip dependencies required.

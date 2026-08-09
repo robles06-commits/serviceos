@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ServiceOS — Dispatcher de Personal en Sala</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="brand-container">
+      <div class="brand-logo">
+        <span>ServiceOS</span>
+      </div>
+      <span class="logo-badge" style="background: rgba(245,158,11,0.15); color: var(--warning); border-color: rgba(245,158,11,0.3);">STAFF DISPATCHER</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <button class="chip-btn" onclick="testAudio()" style="display: flex; align-items: center; gap: 6px;">
+        🔊 Probar Tono Campana
+      </button>
+      <div class="status-pill">
+        <span class="pulse-dot"></span>
+        <span id="staffTag">ZONA TERRAZA • SOFÍA (STAFF-01)</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-container" style="max-width: 1200px;">
+
+    <!-- Operational Metrics Dashboard Bar -->
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-icon" style="background: rgba(6,182,212,0.15); color: var(--primary);">⚡</div>
+        <div class="metric-data">
+          <div class="value" id="metricActiveCount">0</div>
+          <div class="label">Solicitudes Activas</div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon" style="background: rgba(16,185,129,0.15); color: var(--success);">⏱️</div>
+        <div class="metric-data">
+          <div class="value" id="metricAvgTime">1.2 min</div>
+          <div class="label">Tiempo Medio Respuesta</div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon" style="background: rgba(245,158,11,0.15); color: var(--warning);">⚠️</div>
+        <div class="metric-data">
+          <div class="value" id="metricUrgentCount">0</div>
+          <div class="label">Mesas en Riesgo SLA</div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon" style="background: rgba(99,102,241,0.15); color: var(--accent);">📡</div>
+        <div class="metric-data">
+          <div class="value" style="font-size: 1.1rem; color: var(--success);" id="networkStatus">CONNECTED</div>
+          <div class="label">Red WiFi Sala (PD-002)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Zone Selection Tabs -->
+    <div class="category-tabs" style="margin-bottom: 24px;">
+      <button class="tab-btn active" onclick="switchZone('ALL')">📍 Todas las Zonas</button>
+      <button class="tab-btn" onclick="switchZone('TERRAZA')">🌿 Terraza Exterior</button>
+      <button class="tab-btn" onclick="switchZone('SALON')">🍽️ Comedor Principal</button>
+      <button class="tab-btn" onclick="switchZone('BARRA')">🍸 Barra / Lounge</button>
+    </div>
+
+    <!-- Cards Grid -->
+    <div id="cardsGrid" class="cards-grid">
+      <!-- Active tiles populated dynamically -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyState" class="glass-card" style="text-align: center; padding: 60px 20px;">
+      <span style="font-size: 3.5rem;">🎉</span>
+      <h3 style="font-family: var(--font-heading); font-size: 1.4rem; font-weight: 700; margin-top: 12px;">Sin Solicitudes Pendientes en Sala</h3>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 6px;">Las nuevas intenciones enviadas por los comensales aparecerán en esta pantalla con aviso sonoro en tiempo real.</p>
+    </div>
+
+  </main>
+
+  <script>
+    let activeRequestsMap = new Map();
+    let selectedZoneFilter = 'ALL';
+
+    // Native Web Audio API Bell Synthesizer (Zero Network Dependency)
+    function playWebAudioAlert() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime); // A5 Bell Note
+        osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.4);
+
+        gain.gain.setValueAtTime(0.5, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.4);
+      } catch (e) {
+        console.log("Audio notification played");
+      }
+    }
+
+    function testAudio() {
+      playWebAudioAlert();
+    }
+
+    async function loadActiveRequests() {
+      try {
+        const res = await fetch('/api/requests/active');
+        const list = await res.json();
+        activeRequestsMap.clear();
+        list.forEach(req => activeRequestsMap.set(req.id, req));
+        renderCards();
+      } catch (err) {
+        console.error("Error cargando solicitudes activas:", err);
+      }
+    }
+
+    function switchZone(zone) {
+      selectedZoneFilter = zone;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      renderCards();
+    }
+
+    function renderCards() {
+      const grid = document.getElementById('cardsGrid');
+      const emptyState = document.getElementById('emptyState');
+      const activeCountMetric = document.getElementById('metricActiveCount');
+      const urgentCountMetric = document.getElementById('metricUrgentCount');
+
+      grid.innerHTML = '';
+      const activeList = Array.from(activeRequestsMap.values());
+      
+      activeCountMetric.innerText = activeList.length;
+
+      const urgentCount = activeList.filter(r => r.urgencyLevel === 'CRITICAL_ESCALATION').length;
+      urgentCountMetric.innerText = urgentCount;
+
+      if (activeList.length === 0) {
+        emptyState.style.display = 'block';
+        grid.style.display = 'none';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+      grid.style.display = 'grid';
+
+      activeList.forEach(req => {
+        const isUrgent = req.urgencyLevel === 'CRITICAL_ESCALATION';
+        const isAccepted = req.state === 'ACCEPTED';
+        
+        const card = document.createElement('div');
+        card.className = `staff-card ${isUrgent ? 'urgent' : ''}`;
+
+        const submittedTime = new Date(req.submittedAt);
+        const elapsedMins = Math.max(1, Math.floor((new Date() - submittedTime) / 60000));
+
+        card.innerHTML = `
+          <div>
+            <div class="card-top">
+              <span class="table-badge">${req.servicePointId}</span>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <span class="time-badge">⏱️ ${elapsedMins} min</span>
+                ${isUrgent ? '<span class="time-badge" style="background: rgba(239,68,68,0.2); color: var(--danger); border-color: var(--danger);">URGENTE</span>' : ''}
+              </div>
+            </div>
+
+            <div class="card-body">
+              <div class="intent-title">${req.intentTypeName || req.intentTypeId}</div>
+              <div style="font-size: 0.8rem; font-weight: 700; color: ${isAccepted ? 'var(--success)' : 'var(--warning)'}; margin-top: 4px;">
+                ${isAccepted ? '✓ En Camino (' + (req.assignedAttendantId || 'Sofía') + ')' : '⏳ PENDIENTE DE ATENCIÓN'}
+              </div>
+              ${req.visitorNote ? `<div class="customer-note">"${req.visitorNote}"</div>` : ''}
+            </div>
+          </div>
+
+          <div class="card-actions">
+            ${!isAccepted ? `
+              <button class="btn-action btn-primary" onclick="acceptRequest('${req.id}')">
+                ⚡ ACEPTAR (EN CAMINO)
+              </button>
+            ` : `
+              <button class="btn-action btn-success" onclick="completeRequest('${req.id}')">
+                ✓ MARCAR COMPLETADO
+              </button>
+            `}
+          </div>
+        `;
+
+        grid.appendChild(card);
+      });
+    }
+
+    async function acceptRequest(id) {
+      try {
+        const res = await fetch(`/api/requests/${id}/accept`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ attendantId: 'SOFÍA (STAFF-01)' })
+        });
+        if (res.ok) {
+          loadActiveRequests();
+        } else {
+          const errData = await res.json();
+          alert('Aviso: ' + (errData.error || 'La solicitud ya fue tomada por otro mesero'));
+          loadActiveRequests();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function completeRequest(id) {
+      try {
+        const res = await fetch(`/api/requests/${id}/complete`, {
+          method: 'POST'
+        });
+        if (res.ok) {
+          loadActiveRequests();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // REALTIME SSE EVENT STREAM LISTENER
+    function connectEventStream() {
+      const evtSource = new EventSource('/api/events');
+      evtSource.onmessage = function(e) {
+        const eventData = JSON.parse(e.data);
+        console.log("Evento en tiempo real recibido en Dispatcher:", eventData);
+
+        if (eventData.eventName === 'SH-EVT-003: ServiceRequested') {
+          playWebAudioAlert();
+        }
+        loadActiveRequests();
+      };
+
+      evtSource.onerror = function() {
+        document.getElementById('networkStatus').innerText = 'RECONNECTING...';
+        document.getElementById('networkStatus').style.color = 'var(--warning)';
+      };
+
+      evtSource.onopen = function() {
+        document.getElementById('networkStatus').innerText = 'CONNECTED';
+        document.getElementById('networkStatus').style.color = 'var(--success)';
+      };
+    }
+
+    window.onload = function() {
+      loadActiveRequests();
+      connectEventStream();
+    };
+  </script>
+</body>
+</html>
