@@ -15,18 +15,212 @@ import threading
 from http.server import HTTPServer, ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
 
-# Import Core Domain Aggregates, Value Objects & Use Cases
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from scratch.domain_sandbox.test_core_domain import (
-    InMemoryServiceRequestRepository,
-    SubmitServiceRequestApplicationService,
-    AcceptServiceRequestApplicationService,
-    CompleteServiceRequestApplicationService,
-    ConfirmServiceReceiptApplicationService,
-    RequestId,
-    RequestState,
-    DomainException
-)
+# ============================================================================
+# CORE DOMAIN DEFINITIONS (SELF-CONTAINED)
+# ============================================================================
+class DomainException(Exception): pass
+
+class DomainInvalidStateTransitionException(DomainException):
+    def __init__(self, current_state: str, attempted_action: str):
+        super().__init__(f"Invalid domain state transition: Cannot perform '{attempted_action}' when state is '{current_state}'.")
+
+class DomainInvariantViolationException(DomainException):
+    def __init__(self, invariant_code: str, message: str):
+        super().__init__(f"[{invariant_code}] Invariant Violation: {message}")
+
+class RequestId:
+    def __init__(self, value: str):
+        if not value: raise DomainInvariantViolationException('INV-01', 'RequestId cannot be empty')
+        self.value = str(value)
+    def __eq__(self, other): return isinstance(other, RequestId) and self.value == other.value
+
+class TenantId:
+    def __init__(self, value: str):
+        if not value: raise DomainInvariantViolationException('INV-02', 'TenantId cannot be empty')
+        self.value = str(value)
+    def __eq__(self, other): return isinstance(other, TenantId) and self.value == other.value
+
+class VenueId:
+    def __init__(self, value: str):
+        if not value: raise DomainInvariantViolationException('INV-01', 'VenueId cannot be empty')
+        self.value = str(value)
+    def __eq__(self, other): return isinstance(other, VenueId) and self.value == other.value
+
+class ServicePointId:
+    def __init__(self, value: str):
+        if not value: raise DomainInvariantViolationException('INV-01', 'ServicePointId cannot be empty')
+        self.value = str(value)
+    def __eq__(self, other): return isinstance(other, ServicePointId) and self.value == other.value
+
+class ServiceIntentTypeId:
+    def __init__(self, value: str, name: str = ""):
+        if not value: raise DomainInvariantViolationException('INV-01', 'ServiceIntentTypeId value cannot be empty')
+        self.value = str(value)
+        self.name = name or str(value)
+    def __eq__(self, other): return isinstance(other, ServiceIntentTypeId) and self.value == other.value
+
+class VisitorNote:
+    def __init__(self, text: str = ""):
+        self.text = text.strip() if text else ""
+
+class SignedAccessProof:
+    def __init__(self, token: str):
+        if not token: raise DomainInvariantViolationException('INV-04', 'SignedAccessProof token required')
+        self.token = token
+
+from enum import Enum
+class RequestState(str, Enum):
+    SUBMITTED = 'SUBMITTED'
+    ACCEPTED = 'ACCEPTED'
+    COMPLETED_BY_STAFF = 'COMPLETED_BY_STAFF'
+    COMPLETED_BY_VISITOR = 'COMPLETED_BY_VISITOR'
+
+class UrgencyLevel(str, Enum):
+    NORMAL = 'NORMAL'
+    WARNING = 'WARNING'
+    CRITICAL_ESCALATION = 'CRITICAL_ESCALATION'
+
+class DomainEvent:
+    def __init__(self, event_name: str, aggregate_id: str):
+        self.event_name = event_name
+        self.aggregate_id = aggregate_id
+
+class ServiceRequestedEvent(DomainEvent):
+    def __init__(self, request_id: str, tenant_id: str, venue_id: str, point_id: str, intent_id: str, note: str):
+        super().__init__('SH-EVT-003: ServiceRequested', request_id)
+
+class ServiceAcceptedByStaffEvent(DomainEvent):
+    def __init__(self, request_id: str, attendant_id: str):
+        super().__init__('SH-EVT-006: ServiceAcceptedByStaff', request_id)
+        self.attendantId = attendant_id
+
+class ServiceCompletedByStaffEvent(DomainEvent):
+    def __init__(self, request_id: str):
+        super().__init__('SH-EVT-007: ServiceCompletedByStaff', request_id)
+
+class ServiceCompletedByVisitorEvent(DomainEvent):
+    def __init__(self, request_id: str):
+        super().__init__('SH-EVT-008: ServiceCompletedByVisitor', request_id)
+
+class ServiceRequestAggregate:
+    def __init__(self, id: RequestId, tenant_id: TenantId, venue_id: VenueId, service_point_id: ServicePointId, intent_type_id: ServiceIntentTypeId, visitor_note: Optional[VisitorNote] = None):
+        self.id = id
+        self.tenant_id = tenant_id
+        self.venue_id = venue_id
+        self.service_point_id = service_point_id
+        self.intent_type_id = intent_type_id
+        self.visitor_note = visitor_note or VisitorNote("")
+        self.state = RequestState.SUBMITTED
+        self.urgency_level = UrgencyLevel.NORMAL
+        self.assigned_attendant_id: Optional[str] = None
+        from datetime import datetime, timezone
+        self.submitted_at = datetime.now(timezone.utc)
+        self.domain_events: list = []
+
+    @classmethod
+    def create(cls, id: RequestId, tenant_id: TenantId, venue_id: VenueId, service_point_id: ServicePointId, intent_type_id: ServiceIntentTypeId, visitor_note: Optional[VisitorNote], proof: SignedAccessProof):
+        aggregate = cls(id, tenant_id, venue_id, service_point_id, intent_type_id, visitor_note)
+        aggregate.add_domain_event(ServiceRequestedEvent(id.value, tenant_id.value, venue_id.value, service_point_id.value, intent_type_id.value, aggregate.visitor_note.text))
+        return aggregate
+
+    def accept(self, attendant_id: str):
+        if self.state != RequestState.SUBMITTED:
+            raise DomainInvalidStateTransitionException(self.state.value, 'accept')
+        self.state = RequestState.ACCEPTED
+        self.assigned_attendant_id = attendant_id
+        self.add_domain_event(ServiceAcceptedByStaffEvent(self.id.value, attendant_id))
+
+    def complete_by_staff(self):
+        if self.state != RequestState.ACCEPTED and self.state != RequestState.SUBMITTED:
+            raise DomainInvalidStateTransitionException(self.state.value, 'complete_by_staff')
+        self.state = RequestState.COMPLETED_BY_STAFF
+        self.add_domain_event(ServiceCompletedByStaffEvent(self.id.value))
+
+    def confirm_receipt_by_visitor(self):
+        self.state = RequestState.COMPLETED_BY_VISITOR
+        self.add_domain_event(ServiceCompletedByVisitorEvent(self.id.value))
+
+    def add_domain_event(self, event: DomainEvent):
+        self.domain_events.append(event)
+
+    def clear_domain_events(self):
+        events = list(self.domain_events)
+        self.domain_events.clear()
+        return events
+
+class RequestDeduplicationDomainService:
+    @staticmethod
+    def validate_no_active_duplicate(repository, point_id: ServicePointId, intent_type_id: ServiceIntentTypeId):
+        existing = repository.find_active_by_point_and_type(point_id, intent_type_id)
+        if existing:
+            raise DomainInvariantViolationException('INV-05', f"Active request for intent '{intent_type_id.value}' already exists at point '{point_id.value}'")
+
+class InMemoryServiceRequestRepository:
+    def __init__(self):
+        self.store: dict = {}
+
+    def find_by_id(self, id: RequestId):
+        return self.store.get(id.value)
+
+    def find_active_by_point_and_type(self, point_id: ServicePointId, intent_type_id: ServiceIntentTypeId):
+        active_states = [RequestState.SUBMITTED, RequestState.ACCEPTED]
+        for req in self.store.values():
+            if req.service_point_id == point_id and req.intent_type_id == intent_type_id and req.state in active_states:
+                return req
+        return None
+
+    def save(self, aggregate: ServiceRequestAggregate):
+        self.store[aggregate.id.value] = aggregate
+
+class SubmitServiceRequestApplicationService:
+    def __init__(self, repository: InMemoryServiceRequestRepository):
+        self.repository = repository
+
+    def execute(self, cmd: dict):
+        req_id = RequestId(cmd['requestId'])
+        tenant_id = TenantId(cmd['tenantId'])
+        venue_id = VenueId(cmd['venueId'])
+        service_point_id = ServicePointId(cmd['servicePointId'])
+        intent_type_id = ServiceIntentTypeId(cmd['intentTypeId'], cmd.get('intentTypeName', ''))
+        visitor_note = VisitorNote(cmd.get('note', ''))
+        proof = SignedAccessProof(cmd['proofToken'])
+        RequestDeduplicationDomainService.validate_no_active_duplicate(self.repository, service_point_id, intent_type_id)
+        aggregate = ServiceRequestAggregate.create(req_id, tenant_id, venue_id, service_point_id, intent_type_id, visitor_note, proof)
+        self.repository.save(aggregate)
+        return aggregate.clear_domain_events()
+
+class AcceptServiceRequestApplicationService:
+    def __init__(self, repository: InMemoryServiceRequestRepository):
+        self.repository = repository
+    def execute(self, request_id_str: str, attendant_id: str):
+        req_id = RequestId(request_id_str)
+        aggregate = self.repository.find_by_id(req_id)
+        if not aggregate: raise DomainException(f"Request {request_id_str} not found")
+        aggregate.accept(attendant_id)
+        self.repository.save(aggregate)
+        return aggregate.clear_domain_events()
+
+class CompleteServiceRequestApplicationService:
+    def __init__(self, repository: InMemoryServiceRequestRepository):
+        self.repository = repository
+    def execute(self, request_id_str: str):
+        req_id = RequestId(request_id_str)
+        aggregate = self.repository.find_by_id(req_id)
+        if not aggregate: raise DomainException(f"Request {request_id_str} not found")
+        aggregate.complete_by_staff()
+        self.repository.save(aggregate)
+        return aggregate.clear_domain_events()
+
+class ConfirmServiceReceiptApplicationService:
+    def __init__(self, repository: InMemoryServiceRequestRepository):
+        self.repository = repository
+    def execute(self, request_id_str: str):
+        req_id = RequestId(request_id_str)
+        aggregate = self.repository.find_by_id(req_id)
+        if not aggregate: raise DomainException(f"Request {request_id_str} not found")
+        aggregate.confirm_receipt_by_visitor()
+        self.repository.save(aggregate)
+        return aggregate.clear_domain_events()
 
 # Shared In-Memory Repository & Use Cases
 SERVER_START_TIME = time.time()
