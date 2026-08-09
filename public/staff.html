@@ -169,30 +169,33 @@
 
       grid.innerHTML = '';
       const activeList = Array.from(activeRequestsMap.values());
+      const now = new Date();
       
       activeCountMetric.innerText = activeList.length;
 
-      const urgentCount = activeList.filter(r => r.urgencyLevel === 'CRITICAL_ESCALATION').length;
-      urgentCountMetric.innerText = urgentCount;
+      // REALTIME CRITICAL ESCALATION CALCULATION (BC-05: >5 MINUTES)
+      let urgentCount = 0;
 
       if (activeList.length === 0) {
         emptyState.style.display = 'block';
         grid.style.display = 'none';
+        urgentCountMetric.innerText = '0';
         return;
       }
 
       emptyState.style.display = 'none';
       grid.style.display = 'grid';
 
-      const now = new Date();
-
       activeList.forEach(req => {
-        const isUrgent = req.urgencyLevel === 'CRITICAL_ESCALATION';
-        const isAccepted = req.state === 'ACCEPTED';
-        
         const submittedTime = new Date(req.submittedAt);
         const elapsedSecs = Math.floor((now - submittedTime) / 1000);
         const elapsedMins = Math.max(1, Math.floor(elapsedSecs / 60));
+        
+        // CRITICAL ESCALATION THRESHOLD (> 300 SECONDS = > 5 MINUTES)
+        const isUrgent = req.urgencyLevel === 'CRITICAL_ESCALATION' || elapsedSecs >= 300;
+        if (isUrgent) urgentCount++;
+
+        const isAccepted = req.state === 'ACCEPTED';
         
         // GRACE WINDOW: 60 SECONDS FOR CUSTOMER EDITS
         const inGraceWindow = elapsedSecs < 60 && !isAccepted;
@@ -217,9 +220,9 @@
             <div class="card-top">
               <span class="table-badge">${req.servicePointId}</span>
               <div style="display: flex; gap: 6px; align-items: center;">
-                <span class="time-badge">⏱️ ${elapsedMins} min</span>
+                <span class="time-badge" style="${isUrgent ? 'background: rgba(239,68,68,0.2); color: var(--danger); border-color: var(--danger); font-weight: 800;' : ''}">⏱️ ${elapsedMins} min</span>
                 ${inGraceWindow ? `<span class="time-badge" style="background: rgba(245,158,11,0.2); color: #f59e0b; border-color: #f59e0b;">⏳ Modificable (${graceSecsLeft}s)</span>` : ''}
-                ${isUrgent ? '<span class="time-badge" style="background: rgba(239,68,68,0.2); color: var(--danger); border-color: var(--danger);">URGENTE</span>' : ''}
+                ${isUrgent ? '<span class="time-badge" style="background: rgba(239,68,68,0.25); color: var(--danger); border-color: var(--danger); font-weight: 800;">🚨 ALERTA ROJA (&gt;5m)</span>' : ''}
               </div>
             </div>
 
@@ -254,6 +257,8 @@
 
         grid.appendChild(card);
       });
+
+      urgentCountMetric.innerText = urgentCount;
     }
 
     function openTicketModal(reqId) {
@@ -288,7 +293,6 @@
         </ul>
       `;
 
-      // DYNAMIC BUTTON BEHAVIOR TO PREVENT DOMAIN TRANSITION ERRORS
       if (req.state === 'ACCEPTED') {
         actionBtn.innerText = '✓ Marcar Completado en Mesa';
         actionBtn.className = 'btn-action btn-success';
@@ -374,6 +378,7 @@
       };
     }
 
+    // REFRESH TIMERS & ESCALATIONS EVERY SECOND
     setInterval(() => renderCards(), 1000);
 
     window.onload = function() {
