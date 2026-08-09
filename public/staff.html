@@ -2,9 +2,20 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ServiceOS — Dispatcher de Personal en Sala</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ServiceOS — Dispatcher de Staff & Comandas de Sala</title>
   <link rel="stylesheet" href="/styles.css">
+  <style>
+    .order-item-chip {
+      background: rgba(0, 0, 0, 0.3);
+      border-left: 3px solid var(--primary);
+      padding: 6px 10px;
+      margin: 4px 0;
+      border-radius: var(--radius-sm);
+      font-size: 0.84rem;
+      color: var(--text-main);
+    }
+  </style>
 </head>
 <body>
 
@@ -14,93 +25,102 @@
       <div class="brand-logo">
         <span>ServiceOS</span>
       </div>
-      <span class="logo-badge" style="background: rgba(245,158,11,0.15); color: var(--warning); border-color: rgba(245,158,11,0.3);">STAFF DISPATCHER</span>
+      <span class="logo-badge">DISPATCHER DE SALA</span>
     </div>
-    <div style="display: flex; align-items: center; gap: 12px;">
-      <button class="chip-btn" onclick="testAudio()" style="display: flex; align-items: center; gap: 6px;">
-        🔊 Probar Tono Campana
-      </button>
-      <div class="status-pill">
-        <span class="pulse-dot"></span>
-        <span id="staffTag">ZONA TERRAZA • SOFÍA (STAFF-01)</span>
-      </div>
+    <div class="status-pill">
+      <span class="pulse-dot"></span>
+      <span id="networkStatus">SISTEMA ONLINE (100% SSE REALTIME)</span>
     </div>
   </header>
 
-  <main class="main-container" style="max-width: 1200px;">
+  <main class="main-container">
 
-    <!-- Operational Metrics Dashboard Bar -->
+    <!-- Operational Metrics Bar -->
     <div class="metrics-row">
       <div class="metric-card">
-        <div class="metric-icon" style="background: rgba(6,182,212,0.15); color: var(--primary);">⚡</div>
-        <div class="metric-data">
-          <div class="value" id="metricActiveCount">0</div>
-          <div class="label">Solicitudes Activas</div>
-        </div>
+        <span class="metric-title">SOLICITUDES ACTIVAS</span>
+        <div id="metricActiveCount" class="metric-value">0</div>
+        <span class="metric-trend trend-up">En Cola de Sala</span>
+      </div>
+      
+      <div class="metric-card">
+        <span class="metric-title">ESCALADAS / CRÍTICAS</span>
+        <div id="metricUrgentCount" class="metric-value" style="color: var(--danger);">0</div>
+        <span class="metric-trend" style="color: var(--danger);">Alerta Roja (>5 min)</span>
       </div>
 
       <div class="metric-card">
-        <div class="metric-icon" style="background: rgba(16,185,129,0.15); color: var(--success);">⏱️</div>
-        <div class="metric-data">
-          <div class="value" id="metricAvgTime">1.2 min</div>
-          <div class="label">Tiempo Medio Respuesta</div>
-        </div>
+        <span class="metric-title">MTTR PROMEDIO DE SALA</span>
+        <div class="metric-value">1.8 <span style="font-size: 1rem;">min</span></div>
+        <span class="metric-trend trend-up">SLA Objetivo &lt;3 min</span>
       </div>
 
-      <div class="metric-card">
-        <div class="metric-icon" style="background: rgba(245,158,11,0.15); color: var(--warning);">⚠️</div>
-        <div class="metric-data">
-          <div class="value" id="metricUrgentCount">0</div>
-          <div class="label">Mesas en Riesgo SLA</div>
-        </div>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-icon" style="background: rgba(99,102,241,0.15); color: var(--accent);">📡</div>
-        <div class="metric-data">
-          <div class="value" style="font-size: 1.1rem; color: var(--success);" id="networkStatus">CONNECTED</div>
-          <div class="label">Red WiFi Sala (PD-002)</div>
-        </div>
+      <div class="metric-card" style="display: flex; align-items: center; justify-content: center; background: rgba(6,182,212,0.08);">
+        <button class="chip-btn" onclick="testAudio()" style="font-size: 0.85rem; padding: 10px 16px;">
+          🔔 Probar Alerta Sonora
+        </button>
       </div>
     </div>
 
-    <!-- Zone Selection Tabs -->
-    <div class="category-tabs" style="margin-bottom: 24px;">
+    <!-- Zone Category Tabs -->
+    <div class="category-tabs">
       <button class="tab-btn active" onclick="switchZone('ALL')">📍 Todas las Zonas</button>
-      <button class="tab-btn" onclick="switchZone('TERRAZA')">🌿 Terraza Exterior</button>
-      <button class="tab-btn" onclick="switchZone('SALON')">🍽️ Comedor Principal</button>
-      <button class="tab-btn" onclick="switchZone('BARRA')">🍸 Barra / Lounge</button>
+      <button class="tab-btn" onclick="switchZone('TERRAZA')">🌿 Terraza Principal</button>
+      <button class="tab-btn" onclick="switchZone('COMEDOR')">🛋️ Comedor Interior</button>
+      <button class="tab-btn" onclick="switchZone('BARRA')">☕ Barra de Métodos</button>
     </div>
 
-    <!-- Cards Grid -->
+    <!-- Live Active Request Cards Grid -->
     <div id="cardsGrid" class="cards-grid">
-      <!-- Active tiles populated dynamically -->
+      <!-- Cards rendered dynamically -->
     </div>
 
     <!-- Empty State -->
-    <div id="emptyState" class="glass-card" style="text-align: center; padding: 60px 20px;">
-      <span style="font-size: 3.5rem;">🎉</span>
-      <h3 style="font-family: var(--font-heading); font-size: 1.4rem; font-weight: 700; margin-top: 12px;">Sin Solicitudes Pendientes en Sala</h3>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 6px;">Las nuevas intenciones enviadas por los comensales aparecerán en esta pantalla con aviso sonoro en tiempo real.</p>
+    <div id="emptyState" class="glass-card" style="text-align: center; padding: 48px; display: none;">
+      <div style="font-size: 3rem; margin-bottom: 12px;">✅</div>
+      <h2 style="font-family: var(--font-heading); font-size: 1.4rem;">Todas las Mesas Atendidas</h2>
+      <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">No hay llamadas activas ni pedidos pendientes en este momento.</p>
     </div>
 
   </main>
 
+  <!-- TICKET DETAIL MODAL FOR STAFF -->
+  <div id="ticketModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 300; align-items: center; justify-content: center; padding: 20px;">
+    <div class="glass-card" style="width: 100%; max-width: 500px; border-color: var(--primary);">
+      <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="section-title" id="ticketModalTitle">📄 Detalle de Comanda de Mesa</h2>
+        <button class="chip-btn" onclick="closeTicketModal()">❌ Cerrar</button>
+      </div>
+
+      <div id="ticketModalContent" style="margin: 16px 0;">
+        <!-- Ticket details inserted dynamically -->
+      </div>
+
+      <button id="ticketModalActionBtn" class="btn-action btn-primary" onclick="closeTicketModal()">
+        Cerrar
+      </button>
+    </div>
+  </div>
+
   <script>
     let activeRequestsMap = new Map();
     let selectedZoneFilter = 'ALL';
+    let webAudioCtx = null;
 
-    // Native Web Audio API Bell Synthesizer (Zero Network Dependency)
     function playWebAudioAlert() {
       try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        const ctx = new AudioCtx();
+        if (!webAudioCtx) {
+          webAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (webAudioCtx.state === 'suspended') {
+          webAudioCtx.resume();
+        }
+        const ctx = webAudioCtx;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
 
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, ctx.currentTime); // A5 Bell Note
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.4);
 
         gain.gain.setValueAtTime(0.5, ctx.currentTime);
@@ -115,9 +135,7 @@
       }
     }
 
-    function testAudio() {
-      playWebAudioAlert();
-    }
+    function testAudio() { playWebAudioAlert(); }
 
     async function loadActiveRequests() {
       try {
@@ -161,15 +179,33 @@
       emptyState.style.display = 'none';
       grid.style.display = 'grid';
 
+      const now = new Date();
+
       activeList.forEach(req => {
         const isUrgent = req.urgencyLevel === 'CRITICAL_ESCALATION';
         const isAccepted = req.state === 'ACCEPTED';
         
+        const submittedTime = new Date(req.submittedAt);
+        const elapsedSecs = Math.floor((now - submittedTime) / 1000);
+        const elapsedMins = Math.max(1, Math.floor(elapsedSecs / 60));
+        
+        // GRACE WINDOW: 60 SECONDS FOR CUSTOMER EDITS
+        const inGraceWindow = elapsedSecs < 60 && !isAccepted;
+        const graceSecsLeft = 60 - elapsedSecs;
+
         const card = document.createElement('div');
         card.className = `staff-card ${isUrgent ? 'urgent' : ''}`;
 
-        const submittedTime = new Date(req.submittedAt);
-        const elapsedMins = Math.max(1, Math.floor((new Date() - submittedTime) / 60000));
+        // ITEMIZE MULTI-PRODUCT ORDERS CLEANLY
+        let itemizedHTML = '';
+        if (req.visitorNote) {
+          const parts = req.visitorNote.split(',');
+          if (parts.length > 1) {
+            itemizedHTML = parts.map(p => `<div class="order-item-chip">✔️ ${p.trim()}</div>`).join('');
+          } else {
+            itemizedHTML = `<div class="customer-note">"${req.visitorNote}"</div>`;
+          }
+        }
 
         card.innerHTML = `
           <div>
@@ -177,27 +213,35 @@
               <span class="table-badge">${req.servicePointId}</span>
               <div style="display: flex; gap: 6px; align-items: center;">
                 <span class="time-badge">⏱️ ${elapsedMins} min</span>
+                ${inGraceWindow ? `<span class="time-badge" style="background: rgba(245,158,11,0.2); color: #f59e0b; border-color: #f59e0b;">⏳ Modificable (${graceSecsLeft}s)</span>` : ''}
                 ${isUrgent ? '<span class="time-badge" style="background: rgba(239,68,68,0.2); color: var(--danger); border-color: var(--danger);">URGENTE</span>' : ''}
               </div>
             </div>
 
             <div class="card-body">
               <div class="intent-title">${req.intentTypeName || req.intentTypeId}</div>
-              <div style="font-size: 0.8rem; font-weight: 700; color: ${isAccepted ? 'var(--success)' : 'var(--warning)'}; margin-top: 4px;">
-                ${isAccepted ? '✓ En Camino (' + (req.assignedAttendantId || 'Sofía') + ')' : '⏳ PENDIENTE DE ATENCIÓN'}
+              <div style="font-size: 0.8rem; font-weight: 700; color: ${isAccepted ? 'var(--success)' : (inGraceWindow ? 'var(--warning)' : '#f59e0b')}; margin-top: 4px;">
+                ${isAccepted ? '✓ En Camino (' + (req.assignedAttendantId || 'Sofía') + ')' : (inGraceWindow ? '⏳ Esperando Confirmación Cliente (' + graceSecsLeft + 's)' : '⏳ PENDIENTE DE EMITIR COMANDA')}
               </div>
-              ${req.visitorNote ? `<div class="customer-note">"${req.visitorNote}"</div>` : ''}
+              
+              <div style="margin-top: 10px;">
+                ${itemizedHTML}
+              </div>
             </div>
           </div>
 
-          <div class="card-actions">
+          <div class="card-actions" style="display: flex; flex-direction: column; gap: 8px;">
+            <button class="chip-btn" style="width: 100%; border-color: var(--primary); color: var(--primary);" onclick="openTicketModal('${req.id}')">
+              🔍 Ver Detalle de Comanda
+            </button>
+
             ${!isAccepted ? `
-              <button class="btn-action btn-primary" onclick="acceptRequest('${req.id}')">
-                ⚡ ACEPTAR (EN CAMINO)
+              <button class="btn-action btn-primary" ${inGraceWindow ? 'disabled style="opacity: 0.55; cursor: not-allowed;"' : ''} onclick="acceptRequest('${req.id}')">
+                ${inGraceWindow ? `⏳ ESPERANDO EDICIÓN CLIENTE (${graceSecsLeft}s)` : '⚡ ACEPTAR (EMITIR COMANDA)'}
               </button>
             ` : `
               <button class="btn-action btn-success" onclick="completeRequest('${req.id}')">
-                ✓ MARCAR COMPLETADO
+                ✓ MARCAR COMPLETADO EN MESA
               </button>
             `}
           </div>
@@ -205,6 +249,45 @@
 
         grid.appendChild(card);
       });
+    }
+
+    function openTicketModal(reqId) {
+      const req = activeRequestsMap.get(reqId);
+      if (!req) return;
+
+      document.getElementById('ticketModalTitle').innerText = `📄 Comanda ${req.servicePointId}`;
+      const content = document.getElementById('ticketModalContent');
+
+      let itemsFormatted = '';
+      if (req.visitorNote && req.visitorNote.includes(',')) {
+        itemsFormatted = req.visitorNote.split(',').map(i => `<li style="padding: 6px 0; border-bottom: 1px dashed var(--border-glass);">✔️ ${i.trim()}</li>`).join('');
+      } else {
+        itemsFormatted = `<p style="color: var(--text-secondary);">${req.visitorNote || 'Sin nota adicional'}</p>`;
+      }
+
+      content.innerHTML = `
+        <div style="background: rgba(0,0,0,0.3); padding: 14px; border-radius: var(--radius-md); margin-bottom: 14px;">
+          <h3 style="font-family: var(--font-heading); color: #f59e0b; font-size: 1.2rem;">${req.intentTypeName || req.intentTypeId}</h3>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">Ubicación: <strong>${req.servicePointId}</strong> | Estado: <strong>${req.state}</strong></p>
+        </div>
+
+        <h4 style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px;">Detalle de la Comanda:</h4>
+        <ul style="list-style: none; padding: 0; margin-bottom: 16px;">
+          ${itemsFormatted}
+        </ul>
+      `;
+
+      document.getElementById('ticketModalActionBtn').onclick = () => {
+        closeTicketModal();
+        acceptRequest(reqId);
+      };
+      document.getElementById('ticketModalActionBtn').innerText = '⚡ Aceptar y Emitir Comanda a Cocina';
+
+      document.getElementById('ticketModal').style.display = 'flex';
+    }
+
+    function closeTicketModal() {
+      document.getElementById('ticketModal').style.display = 'none';
     }
 
     async function acceptRequest(id) {
@@ -239,13 +322,10 @@
       }
     }
 
-    // REALTIME SSE EVENT STREAM LISTENER
     function connectEventStream() {
       const evtSource = new EventSource('/api/events');
       evtSource.onmessage = function(e) {
         const eventData = JSON.parse(e.data);
-        console.log("Evento en tiempo real recibido en Dispatcher:", eventData);
-
         if (eventData.eventName === 'SH-EVT-003: ServiceRequested') {
           playWebAudioAlert();
         }
@@ -258,10 +338,13 @@
       };
 
       evtSource.onopen = function() {
-        document.getElementById('networkStatus').innerText = 'CONNECTED';
+        document.getElementById('networkStatus').innerText = 'SISTEMA ONLINE (100% SSE REALTIME)';
         document.getElementById('networkStatus').style.color = 'var(--success)';
       };
     }
+
+    // Refresh timers every second for countdowns
+    setInterval(() => renderCards(), 1000);
 
     window.onload = function() {
       loadActiveRequests();

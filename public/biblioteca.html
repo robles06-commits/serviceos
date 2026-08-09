@@ -74,9 +74,20 @@
     </div>
   </header>
 
+  <!-- PERSISTENT TOP ORDER BANNER (COMPACT) -->
+  <div id="persistentTopBanner" style="display: none; background: rgba(217,119,6,0.2); border-bottom: 1px solid #d97706; padding: 10px 16px; align-items: center; justify-content: space-between;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span class="pulse-dot" style="background: #f59e0b;"></span>
+      <span style="font-size: 0.88rem; font-weight: 700; color: #f59e0b;" id="persistentBannerText">⚡ Pedido en Curso</span>
+    </div>
+    <button class="chip-btn" style="color: #f59e0b; border-color: #f59e0b; padding: 4px 12px; font-size: 0.8rem;" onclick="expandActiveRequestPanel()">
+      👁️ Ver Estado / Editar
+    </button>
+  </div>
+
   <main class="main-container">
 
-    <!-- Active Request Card & Live Stepper (Synchronized via SSE in Realtime) -->
+    <!-- Active Request Card & Live Stepper (With 5s Auto-Collapse & 60s Edit Grace Period) -->
     <div id="activeRequestPanel" class="glass-card" style="display: none; border-color: #d97706;">
       <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
         <span class="section-title">⚡ SOLICITUD EN CURSO EN MESA</span>
@@ -84,9 +95,23 @@
       </div>
 
       <div style="margin: 16px 0; background: rgba(0,0,0,0.25); padding: 16px; border-radius: var(--radius-md);">
-        <h2 id="activeIntentTitle" style="font-family: var(--font-heading); font-size: 1.4rem; font-weight: 800; color: #f59e0b;">Pedido Realizado</h2>
-        <p id="activeNoteText" style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;"></p>
+        <h2 id="activeIntentTitle" style="font-family: var(--font-heading); font-size: 1.3rem; font-weight: 800; color: #f59e0b;">Pedido Realizado</h2>
+        
+        <div id="activeItemsListFormatted" style="margin: 10px 0; font-size: 0.88rem; color: var(--text-secondary);">
+          <!-- Formatted items list -->
+        </div>
+
         <p id="activeAttendantText" style="color: var(--success); font-weight: 600; margin-top: 8px; font-size: 0.92rem;"></p>
+
+        <!-- 60-SECOND CUSTOMER EDIT GRACE WINDOW BADGE & BUTTON -->
+        <div id="graceWindowBox" style="margin-top: 14px; background: rgba(245,158,11,0.15); border: 1px dashed #f59e0b; padding: 12px; border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+          <div style="font-size: 0.82rem; color: #f59e0b;">
+            ⏳ <strong id="graceTimerText">Tienes 60s para modificar tu pedido</strong> antes de emitir la comanda en cocina.
+          </div>
+          <button id="btnEditOrderGrace" class="chip-btn" style="background: #f59e0b; color: #000; font-weight: 800; padding: 6px 14px;" onclick="editActiveOrder()">
+            ✏️ Modificar Pedido
+          </button>
+        </div>
       </div>
 
       <!-- Live Stepper Tracker -->
@@ -111,6 +136,11 @@
           <span class="step-label">Entregado</span>
         </div>
       </div>
+
+      <!-- RETURN TO MENU BUTTON -->
+      <button class="btn-action btn-secondary" style="margin-top: 16px; padding: 12px; font-size: 0.9rem;" onclick="collapseActiveRequestPanel()">
+        ⬅️ Regresar al Menú Principal
+      </button>
     </div>
 
     <!-- Main View Switcher Bar -->
@@ -305,7 +335,7 @@
 
   </main>
 
-  <!-- FLOATING CART BAR (SHOWS WHEN ITEMS ADDED) -->
+  <!-- FLOATING CART BAR -->
   <div id="floatingCartBar" class="cart-floating-bar" style="display: none;" onclick="openCartDrawer()">
     <div style="display: flex; align-items: center; gap: 10px;">
       <span style="font-size: 1.4rem;">🛒</span>
@@ -327,9 +357,7 @@
         <button class="chip-btn" onclick="closeCartDrawer()">❌ Cerrar</button>
       </div>
 
-      <div id="cartItemsList" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
-        <!-- Items inserted dynamically -->
-      </div>
+      <div id="cartItemsList" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;"></div>
 
       <div style="margin-bottom: 16px;">
         <label style="font-size: 0.82rem; font-weight: 600; color: var(--text-secondary);">Nota o Detalle Opcional:</label>
@@ -352,17 +380,15 @@
     let currentRequestId = null;
     let presenceToken = null;
     let servicePointId = 'MESA-04';
-
-    // CART STATE
     let cart = [];
+    let orderSubmittedTimestamp = null;
+    let graceInterval = null;
+    let autoCollapseTimeout = null;
 
     function addToCart(title, price) {
       const existing = cart.find(item => item.title === title);
-      if (existing) {
-        existing.qty += 1;
-      } else {
-        cart.push({ title, price, qty: 1 });
-      }
+      if (existing) { existing.qty += 1; }
+      else { cart.push({ title, price, qty: 1 }); }
       updateCartUI();
     }
 
@@ -370,9 +396,7 @@
       const item = cart.find(i => i.title === title);
       if (item) {
         item.qty += delta;
-        if (item.qty <= 0) {
-          cart = cart.filter(i => i.title !== title);
-        }
+        if (item.qty <= 0) cart = cart.filter(i => i.title !== title);
       }
       updateCartUI();
       renderCartDrawer();
@@ -395,14 +419,8 @@
       }
     }
 
-    function openCartDrawer() {
-      renderCartDrawer();
-      document.getElementById('cartDrawer').style.display = 'flex';
-    }
-
-    function closeCartDrawer() {
-      document.getElementById('cartDrawer').style.display = 'none';
-    }
+    function openCartDrawer() { renderCartDrawer(); document.getElementById('cartDrawer').style.display = 'flex'; }
+    function closeCartDrawer() { document.getElementById('cartDrawer').style.display = 'none'; }
 
     function renderCartDrawer() {
       const list = document.getElementById('cartItemsList');
@@ -420,7 +438,7 @@
       cart.forEach(item => {
         const itemRow = document.createElement('div');
         itemRow.style.display = 'flex';
-        itemRow.style.justifySpaceBetween = 'space-between';
+        itemRow.style.justifyContent = 'space-between';
         itemRow.style.alignItems = 'center';
         itemRow.style.background = 'rgba(0,0,0,0.2)';
         itemRow.style.padding = '10px 14px';
@@ -437,7 +455,6 @@
             <button class="chip-btn" style="padding: 2px 10px;" onclick="changeQty('${item.title}', 1)">+</button>
           </div>
         `;
-
         list.appendChild(itemRow);
       });
     }
@@ -445,7 +462,6 @@
     async function submitCartOrder() {
       if (cart.length === 0) return;
       closeCartDrawer();
-
       const itemsSummary = cart.map(i => `${i.qty}x ${i.title}`).join(', ');
       const totalPrice = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
       const userNote = document.getElementById('cartNoteInput').value;
@@ -453,11 +469,25 @@
       const fullOrderTitle = `Pedido (${cart.reduce((s,i)=>s+i.qty,0)} items) - Total: $${totalPrice.toFixed(2)} USD`;
       const fullOrderNote = `${itemsSummary}${userNote ? ' | Nota: ' + userNote : ''}`;
 
-      // Reset Cart
-      cart = [];
-      updateCartUI();
-
       selectAndSubmitIntent('INTENT-WAITER', fullOrderTitle, '🛒', fullOrderNote);
+    }
+
+    function editActiveOrder() {
+      // Re-open cart or view to modify order
+      openCartDrawer();
+    }
+
+    function collapseActiveRequestPanel() {
+      document.getElementById('activeRequestPanel').style.display = 'none';
+      document.getElementById('persistentTopBanner').style.display = 'flex';
+      switchMainView('MENU');
+    }
+
+    function expandActiveRequestPanel() {
+      document.getElementById('activeRequestPanel').style.display = 'block';
+      document.getElementById('persistentTopBanner').style.display = 'none';
+      document.getElementById('catalogPanel').style.display = 'none';
+      document.getElementById('digitalMenuPanel').style.display = 'none';
     }
 
     function parseQRUrlParams() {
@@ -474,34 +504,24 @@
         const res = await fetch('/api/presence/verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            servicePointId: servicePointId,
-            qrCode: qrTokenFromUrl || `QR-${servicePointId}-SIGNED`
-          })
+          body: JSON.stringify({ servicePointId: servicePointId, qrCode: qrTokenFromUrl || `QR-${servicePointId}-SIGNED` })
         });
         const data = await res.json();
         if (data.success) presenceToken = data.token;
-      } catch (err) {
-        console.error(err);
-      }
+      } catch (err) { console.error(err); }
     }
 
     function switchMainView(view) {
-      const catalogPanel = document.getElementById('catalogPanel');
-      const digitalMenuPanel = document.getElementById('digitalMenuPanel');
-      const btnIntents = document.getElementById('btnViewIntents');
-      const btnMenu = document.getElementById('btnViewMenu');
-
       if (view === 'INTENTS') {
-        catalogPanel.style.display = 'block';
-        digitalMenuPanel.style.display = 'none';
-        btnIntents.classList.add('active');
-        btnMenu.classList.remove('active');
+        document.getElementById('catalogPanel').style.display = 'block';
+        document.getElementById('digitalMenuPanel').style.display = 'none';
+        document.getElementById('btnViewIntents').classList.add('active');
+        document.getElementById('btnViewMenu').classList.remove('active');
       } else {
-        catalogPanel.style.display = 'none';
-        digitalMenuPanel.style.display = 'block';
-        btnIntents.classList.remove('active');
-        btnMenu.classList.add('active');
+        document.getElementById('catalogPanel').style.display = 'none';
+        document.getElementById('digitalMenuPanel').style.display = 'block';
+        document.getElementById('btnViewIntents').classList.remove('active');
+        document.getElementById('btnViewMenu').classList.add('active');
       }
     }
 
@@ -545,15 +565,42 @@
         if (res.ok) {
           currentRequestId = requestId;
           localStorage.setItem('activeRequestId', requestId);
+          orderSubmittedTimestamp = Date.now();
+          startGraceCountdown();
           showActiveState(title, note, 'SUBMITTED', 'Notificando al mesero...');
+
+          // 5-SECOND AUTO COLLAPSE TO MENU
+          if (autoCollapseTimeout) clearTimeout(autoCollapseTimeout);
+          autoCollapseTimeout = setTimeout(() => {
+            collapseActiveRequestPanel();
+          }, 5000);
+
         } else if (data.error && (data.error.includes('INV-05') || data.error.includes('already exists'))) {
-          showActiveState(title, 'Ya existe una solicitud activa para esta mesa. El mesero viene en camino.', 'SUBMITTED', 'Atención en Proceso');
+          showActiveState(title, 'Ya existe una solicitud activa para esta mesa.', 'SUBMITTED', 'Atención en Proceso');
         } else {
           alert('Aviso: ' + (data.error || 'No se pudo procesar'));
         }
-      } catch (err) {
-        alert('Fallo de conexión');
-      }
+      } catch (err) { alert('Fallo de conexión'); }
+    }
+
+    function startGraceCountdown() {
+      if (graceInterval) clearInterval(graceInterval);
+      graceInterval = setInterval(() => {
+        if (!orderSubmittedTimestamp) return;
+        const elapsedSecs = Math.floor((Date.now() - orderSubmittedTimestamp) / 1000);
+        const remaining = 60 - elapsedSecs;
+
+        const graceBox = document.getElementById('graceWindowBox');
+        const timerText = document.getElementById('graceTimerText');
+
+        if (remaining > 0) {
+          graceBox.style.display = 'flex';
+          timerText.innerText = `Tienes ${remaining}s para modificar tu pedido`;
+        } else {
+          graceBox.style.display = 'none';
+          clearInterval(graceInterval);
+        }
+      }, 1000);
     }
 
     function showActiveState(intentName, note, state, statusText, attendant) {
@@ -561,14 +608,22 @@
       document.getElementById('digitalMenuPanel').style.display = 'none';
       document.getElementById('activeRequestPanel').style.display = 'block';
       document.getElementById('activeIntentTitle').innerText = intentName;
-      document.getElementById('activeNoteText').innerText = note ? `"${note}"` : '';
+
+      // Itemized formatting for customer
+      const itemsContainer = document.getElementById('activeItemsListFormatted');
+      if (note && note.includes(',')) {
+        itemsContainer.innerHTML = note.split(',').map(i => `<div style="padding: 2px 0;">✔️ ${i.trim()}</div>`).join('');
+      } else {
+        itemsContainer.innerText = note ? `"${note}"` : '';
+      }
 
       const badge = document.getElementById('activeStatusBadge');
       badge.innerText = statusText;
-
       const attendantText = document.getElementById('activeAttendantText');
       const stepLine = document.getElementById('stepperLineActive');
       const step3 = document.getElementById('step3');
+
+      document.getElementById('persistentBannerText').innerText = `⚡ ${intentName} • ${statusText}`;
 
       if (attendant || state === 'ACCEPTED') {
         attendantText.innerText = `👤 ${attendant || 'Sofía (Mesera)'} viene en camino hacia tu mesa.`;
@@ -585,13 +640,10 @@
       }
     }
 
-    // ROCK-SOLID SSE EVENT STREAM LISTENER (SYNCHRONIZES STATUS LIVE)
     function connectEventStream() {
       const evtSource = new EventSource('/api/events');
       evtSource.onmessage = function(e) {
         const eventData = JSON.parse(e.data);
-        console.log("Realtime Event Stream in PWA:", eventData);
-
         const storedReqId = localStorage.getItem('activeRequestId');
         const isMatch = (currentRequestId && eventData.aggregateId === currentRequestId) || 
                         (storedReqId && eventData.aggregateId === storedReqId) ||
@@ -601,7 +653,7 @@
           if (eventData.eventName === 'SH-EVT-006: ServiceAcceptedByStaff') {
             showActiveState(
               document.getElementById('activeIntentTitle').innerText || 'Pedido en Curso',
-              document.getElementById('activeNoteText').innerText,
+              document.getElementById('activeItemsListFormatted').innerText,
               'ACCEPTED',
               'Personal en Camino',
               eventData.attendantId || 'Sofía (Mesera)'

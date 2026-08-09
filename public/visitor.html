@@ -65,6 +65,17 @@
     </div>
   </header>
 
+  <!-- PERSISTENT TOP ORDER BANNER (COMPACT) -->
+  <div id="persistentTopBanner" style="display: none; background: rgba(6,182,212,0.15); border-bottom: 1px solid var(--primary); padding: 10px 16px; align-items: center; justify-content: space-between;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span class="pulse-dot"></span>
+      <span style="font-size: 0.88rem; font-weight: 700; color: var(--primary);" id="persistentBannerText">⚡ Pedido en Curso</span>
+    </div>
+    <button class="chip-btn" style="color: var(--primary); border-color: var(--primary); padding: 4px 12px; font-size: 0.8rem;" onclick="expandActiveRequestPanel()">
+      👁️ Ver Estado / Editar
+    </button>
+  </div>
+
   <main class="main-container">
 
     <!-- Active Request Panel & Live Stepper (SSE Synchronized) -->
@@ -75,9 +86,21 @@
       </div>
 
       <div style="margin: 16px 0; background: rgba(0,0,0,0.25); padding: 16px; border-radius: var(--radius-md);">
-        <h2 id="activeIntentTitle" style="font-family: var(--font-heading); font-size: 1.4rem; font-weight: 800; color: var(--primary);">Pedido Realizado</h2>
-        <p id="activeNoteText" style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;"></p>
+        <h2 id="activeIntentTitle" style="font-family: var(--font-heading); font-size: 1.3rem; font-weight: 800; color: var(--primary);">Pedido Realizado</h2>
+        
+        <div id="activeItemsListFormatted" style="margin: 10px 0; font-size: 0.88rem; color: var(--text-secondary);"></div>
+
         <p id="activeAttendantText" style="color: var(--success); font-weight: 600; margin-top: 8px; font-size: 0.92rem;"></p>
+
+        <!-- 60-SECOND GRACE BOX -->
+        <div id="graceWindowBox" style="margin-top: 14px; background: rgba(6,182,212,0.15); border: 1px dashed var(--primary); padding: 12px; border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+          <div style="font-size: 0.82rem; color: var(--primary);">
+            ⏳ <strong id="graceTimerText">Tienes 60s para modificar tu pedido</strong> antes de emitir la comanda en cocina.
+          </div>
+          <button id="btnEditOrderGrace" class="chip-btn" style="background: var(--primary); color: #000; font-weight: 800; padding: 6px 14px;" onclick="editActiveOrder()">
+            ✏️ Modificar Pedido
+          </button>
+        </div>
       </div>
 
       <!-- Live Stepper Tracker -->
@@ -102,6 +125,10 @@
           <span class="step-label">Entregado</span>
         </div>
       </div>
+
+      <button class="btn-action btn-secondary" style="margin-top: 16px; padding: 12px; font-size: 0.9rem;" onclick="collapseActiveRequestPanel()">
+        ⬅️ Regresar al Menú Principal
+      </button>
     </div>
 
     <!-- View Switcher -->
@@ -244,6 +271,9 @@
     let presenceToken = null;
     let servicePointId = 'MESA-05';
     let cart = [];
+    let orderSubmittedTimestamp = null;
+    let graceInterval = null;
+    let autoCollapseTimeout = null;
 
     function addToCart(title, price) {
       const existing = cart.find(item => item.title === title);
@@ -329,9 +359,24 @@
       const fullOrderTitle = `Pedido (${cart.reduce((s,i)=>s+i.qty,0)} items) - Total: $${totalPrice.toFixed(2)} USD`;
       const fullOrderNote = `${itemsSummary}${userNote ? ' | Nota: ' + userNote : ''}`;
 
-      cart = [];
-      updateCartUI();
       selectAndSubmitIntent('INTENT-FOOD', fullOrderTitle, '🛒', fullOrderNote);
+    }
+
+    function editActiveOrder() {
+      openCartDrawer();
+    }
+
+    function collapseActiveRequestPanel() {
+      document.getElementById('activeRequestPanel').style.display = 'none';
+      document.getElementById('persistentTopBanner').style.display = 'flex';
+      switchMainView('MENU');
+    }
+
+    function expandActiveRequestPanel() {
+      document.getElementById('activeRequestPanel').style.display = 'block';
+      document.getElementById('persistentTopBanner').style.display = 'none';
+      document.getElementById('catalogPanel').style.display = 'none';
+      document.getElementById('digitalMenuPanel').style.display = 'none';
     }
 
     function parseQRUrlParams() {
@@ -394,11 +439,37 @@
         if (res.ok) {
           currentRequestId = requestId;
           localStorage.setItem('activeRequestId', requestId);
+          orderSubmittedTimestamp = Date.now();
+          startGraceCountdown();
           showActiveState(title, note, 'SUBMITTED', 'Notificando al mesero...');
+
+          if (autoCollapseTimeout) clearTimeout(autoCollapseTimeout);
+          autoCollapseTimeout = setTimeout(() => { collapseActiveRequestPanel(); }, 5000);
+
         } else {
           alert('Aviso: ' + (data.error || 'No se pudo procesar'));
         }
       } catch (err) { alert('Fallo de conexión'); }
+    }
+
+    function startGraceCountdown() {
+      if (graceInterval) clearInterval(graceInterval);
+      graceInterval = setInterval(() => {
+        if (!orderSubmittedTimestamp) return;
+        const elapsedSecs = Math.floor((Date.now() - orderSubmittedTimestamp) / 1000);
+        const remaining = 60 - elapsedSecs;
+
+        const graceBox = document.getElementById('graceWindowBox');
+        const timerText = document.getElementById('graceTimerText');
+
+        if (remaining > 0) {
+          graceBox.style.display = 'flex';
+          timerText.innerText = `Tienes ${remaining}s para modificar tu pedido`;
+        } else {
+          graceBox.style.display = 'none';
+          clearInterval(graceInterval);
+        }
+      }, 1000);
     }
 
     function showActiveState(intentName, note, state, statusText, attendant) {
@@ -406,13 +477,21 @@
       document.getElementById('digitalMenuPanel').style.display = 'none';
       document.getElementById('activeRequestPanel').style.display = 'block';
       document.getElementById('activeIntentTitle').innerText = intentName;
-      document.getElementById('activeNoteText').innerText = note ? `"${note}"` : '';
+
+      const itemsContainer = document.getElementById('activeItemsListFormatted');
+      if (note && note.includes(',')) {
+        itemsContainer.innerHTML = note.split(',').map(i => `<div style="padding: 2px 0;">✔️ ${i.trim()}</div>`).join('');
+      } else {
+        itemsContainer.innerText = note ? `"${note}"` : '';
+      }
 
       const badge = document.getElementById('activeStatusBadge');
       badge.innerText = statusText;
       const attendantText = document.getElementById('activeAttendantText');
       const stepLine = document.getElementById('stepperLineActive');
       const step3 = document.getElementById('step3');
+
+      document.getElementById('persistentBannerText').innerText = `⚡ ${intentName} • ${statusText}`;
 
       if (attendant || state === 'ACCEPTED') {
         attendantText.innerText = `👤 ${attendant || 'Sofía (Mesera)'} viene en camino hacia tu mesa.`;
@@ -442,7 +521,7 @@
           if (eventData.eventName === 'SH-EVT-006: ServiceAcceptedByStaff') {
             showActiveState(
               document.getElementById('activeIntentTitle').innerText || 'Pedido en Curso',
-              document.getElementById('activeNoteText').innerText,
+              document.getElementById('activeItemsListFormatted').innerText,
               'ACCEPTED',
               'Personal en Camino',
               eventData.attendantId || 'Sofía (Mesera)'
