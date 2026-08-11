@@ -33,12 +33,20 @@
       white-space: nowrap;
       text-align: center;
     }
-    .actions-flex {
-      display: flex;
-      gap: 8px;
-      justify-content: flex-end;
-      align-items: center;
-      flex-wrap: wrap;
+    .action-dropdown {
+      width: auto;
+      font-weight: 700;
+      font-size: 0.84rem;
+      border-color: var(--primary);
+      background: rgba(15, 23, 42, 0.95);
+      color: var(--primary);
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+    }
+    .action-dropdown option {
+      background: #0f172a;
+      color: #fff;
     }
   </style>
 </head>
@@ -178,11 +186,11 @@
       </div>
     </div>
 
-    <!-- Tenant Directory Table (CLEAN & UNIFORM LAYOUT WITH SECURE DELETION & BACKUP) -->
+    <!-- Tenant Directory Table (CLEAN & UNIFORM LAYOUT WITH ACTION DROPDOWNS) -->
     <div class="glass-card">
       <div class="section-header">
         <h2 class="section-title">🏢 Directorio Oficial de Establecimientos SaaS</h2>
-        <p class="section-subtitle">Tabla organizada con respaldo automático antes de eliminación y opción de restauración.</p>
+        <p class="section-subtitle">Tabla organizada con menú desplegable de acciones por cada restaurante.</p>
       </div>
 
       <div style="overflow-x: auto;">
@@ -208,18 +216,14 @@
               <td><span class="badge-plan" style="background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid var(--success);">PLAN PRO</span></td>
               <td><strong>12 Mesas</strong></td>
               <td><span style="color: var(--text-secondary);">gerencia@labibliotecacafe.sv</span></td>
-              <td>
-                <div class="actions-flex">
-                  <a href="/tenant?id=TENANT-BIBLIOTECA-CAFE&impersonate=true" target="_blank" class="chip-btn" style="color: var(--primary); border-color: var(--primary); text-decoration: none;">
-                    🏢 Ingresar al Panel
-                  </a>
-                  <a href="/biblioteca?table=MESA-04" target="_blank" class="chip-btn" style="color: #f59e0b; border-color: #f59e0b; text-decoration: none;">
-                    ☕ Menú PWA
-                  </a>
-                  <button class="chip-btn" style="color: #ef4444; border-color: #ef4444;" onclick="openDeleteTenantModal('TENANT-BIBLIOTECA-CAFE', 'La Biblioteca del Café', 'gerencia@labibliotecacafe.sv')">
-                    🗑️ Eliminar
-                  </button>
-                </div>
+              <td style="text-align: right;">
+                <select class="action-dropdown" onchange="handleTenantActionSelect(this, 'TENANT-BIBLIOTECA-CAFE', 'La Biblioteca del Café', 'gerencia@labibliotecacafe.sv', '/biblioteca?table=MESA-04')">
+                  <option value="" selected disabled>⚡ Acciones ▾</option>
+                  <option value="IMPERSONATE">🏢 Ingresar al Panel (Impersonar)</option>
+                  <option value="PWA">☕ Abrir Menú PWA</option>
+                  <option value="LICENSE">🔑 Generar Licencia</option>
+                  <option value="DELETE" style="color: #ef4444;">🗑️ Eliminar Cliente</option>
+                </select>
               </td>
             </tr>
 
@@ -233,15 +237,14 @@
               <td><span class="badge-plan" style="background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid var(--success);">PLAN PRO</span></td>
               <td><strong>15 Mesas</strong></td>
               <td><span style="color: var(--text-secondary);">admin@laterraza.com</span></td>
-              <td>
-                <div class="actions-flex">
-                  <a href="/tenant?id=TENANT-REST-PILOT-01&impersonate=true" target="_blank" class="chip-btn" style="color: var(--primary); border-color: var(--primary); text-decoration: none;">
-                    🏢 Ingresar al Panel
-                  </a>
-                  <button class="chip-btn" style="color: #ef4444; border-color: #ef4444;" onclick="openDeleteTenantModal('TENANT-REST-PILOT-01', 'Restaurante La Terraza', 'admin@laterraza.com')">
-                    🗑️ Eliminar
-                  </button>
-                </div>
+              <td style="text-align: right;">
+                <select class="action-dropdown" onchange="handleTenantActionSelect(this, 'TENANT-REST-PILOT-01', 'Restaurante La Terraza', 'admin@laterraza.com', '/visitor?table=MESA-01')">
+                  <option value="" selected disabled>⚡ Acciones ▾</option>
+                  <option value="IMPERSONATE">🏢 Ingresar al Panel (Impersonar)</option>
+                  <option value="PWA">☕ Abrir Menú PWA</option>
+                  <option value="LICENSE">🔑 Generar Licencia</option>
+                  <option value="DELETE" style="color: #ef4444;">🗑️ Eliminar Cliente</option>
+                </select>
               </td>
             </tr>
 
@@ -255,15 +258,14 @@
               <td><span class="badge-plan" style="background: rgba(6,182,212,0.15); color: var(--primary); border: 1px solid var(--primary);">PILOTO GRATIS</span></td>
               <td><strong>8 Mesas</strong></td>
               <td><span style="color: var(--text-secondary);">contacto@cafecentral.cl</span></td>
-              <td>
-                <div class="actions-flex">
-                  <a href="/tenant?id=TENANT-CAFE-02&impersonate=true" target="_blank" class="chip-btn" style="color: var(--primary); border-color: var(--primary); text-decoration: none;">
-                    🏢 Ingresar al Panel
-                  </a>
-                  <button class="chip-btn" style="color: #ef4444; border-color: #ef4444;" onclick="openDeleteTenantModal('TENANT-CAFE-02', 'Café & Bakery Central', 'contacto@cafecentral.cl')">
-                    🗑️ Eliminar
-                  </button>
-                </div>
+              <td style="text-align: right;">
+                <select class="action-dropdown" onchange="handleTenantActionSelect(this, 'TENANT-CAFE-02', 'Café & Bakery Central', 'contacto@cafecentral.cl', '/visitor?table=MESA-01')">
+                  <option value="" selected disabled>⚡ Acciones ▾</option>
+                  <option value="IMPERSONATE">🏢 Ingresar al Panel (Impersonar)</option>
+                  <option value="PWA">☕ Abrir Menú PWA</option>
+                  <option value="LICENSE">🔑 Generar Licencia</option>
+                  <option value="DELETE" style="color: #ef4444;">🗑️ Eliminar Cliente</option>
+                </select>
               </td>
             </tr>
 
@@ -277,15 +279,14 @@
               <td><span class="badge-plan" style="background: rgba(99,102,241,0.15); color: var(--accent); border: 1px solid var(--accent);">ENTERPRISE</span></td>
               <td><strong>25 Mesas</strong></td>
               <td><span style="color: var(--text-secondary);">gerencia@laestacion.cl</span></td>
-              <td>
-                <div class="actions-flex">
-                  <a href="/tenant?id=TENANT-BAR-03&impersonate=true" target="_blank" class="chip-btn" style="color: var(--primary); border-color: var(--primary); text-decoration: none;">
-                    🏢 Ingresar al Panel
-                  </a>
-                  <button class="chip-btn" style="color: #ef4444; border-color: #ef4444;" onclick="openDeleteTenantModal('TENANT-BAR-03', 'Bistro & Bar La Estación', 'gerencia@laestacion.cl')">
-                    🗑️ Eliminar
-                  </button>
-                </div>
+              <td style="text-align: right;">
+                <select class="action-dropdown" onchange="handleTenantActionSelect(this, 'TENANT-BAR-03', 'Bistro & Bar La Estación', 'gerencia@laestacion.cl', '/visitor?table=MESA-01')">
+                  <option value="" selected disabled>⚡ Acciones ▾</option>
+                  <option value="IMPERSONATE">🏢 Ingresar al Panel (Impersonar)</option>
+                  <option value="PWA">☕ Abrir Menú PWA</option>
+                  <option value="LICENSE">🔑 Generar Licencia</option>
+                  <option value="DELETE" style="color: #ef4444;">🗑️ Eliminar Cliente</option>
+                </select>
               </td>
             </tr>
           </tbody>
@@ -497,6 +498,30 @@
     let currentPrices = { starter: 0, pro: 49.99, enterprise: 99.99 };
     let savedBackupsList = [];
 
+    function handleTenantActionSelect(selectEl, tenantId, tenantName, email, pwaUrl) {
+      const action = selectEl.value;
+      selectEl.value = ''; // Reset back to default disabled option
+
+      if (!action) return;
+
+      if (action === 'IMPERSONATE') {
+        window.open(`/tenant?id=${tenantId}&impersonate=true`, '_blank');
+      } else if (action === 'PWA') {
+        window.open(pwaUrl || '/visitor?table=MESA-01', '_blank');
+      } else if (action === 'LICENSE') {
+        const licSelect = document.getElementById('licClientSelect');
+        if (licSelect) {
+          if (tenantId.includes('BIBLIOTECA')) licSelect.value = 'BIBLIOTECA';
+          else if (tenantId.includes('REST-PILOT')) licSelect.value = 'TERRAZA';
+          else if (tenantId.includes('CAFE-02')) licSelect.value = 'CAFE';
+          else if (tenantId.includes('BAR-03')) licSelect.value = 'BAR';
+        }
+        openGenerateLicenseModal();
+      } else if (action === 'DELETE') {
+        openDeleteTenantModal(tenantId, tenantName, email);
+      }
+    }
+
     function openDeleteTenantModal(tenantId, name, email) {
       document.getElementById('deleteTenantId').value = tenantId;
       document.getElementById('deleteTenantName').value = name;
@@ -525,7 +550,6 @@
       const tenantName = document.getElementById('deleteTenantName').value;
       const tenantEmail = document.getElementById('deleteTenantEmail').value;
 
-      // BUILD FULL SAAS BACKUP JSON FOR SUPERADMIN & CLIENT
       const backupData = {
         app: "ServiceOS Multi-Tenant SaaS",
         version: "1.0",
@@ -548,7 +572,6 @@
         auditHistoryCount: 48
       };
 
-      // TRIGGER AUTOMATIC JSON FILE DOWNLOAD
       const jsonStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute("href", jsonStr);
@@ -560,7 +583,6 @@
       savedBackupsList.push(backupData);
       document.getElementById('metricBackupsCount').innerText = `${savedBackupsList.length + 4} Respaldos`;
 
-      // REMOVE ROW FROM SUPERADMIN TABLE
       const row = document.getElementById(`tenantRow-${tenantId}`);
       if (row) row.remove();
 
@@ -603,15 +625,14 @@
             <td><span class="badge-plan" style="background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid var(--success);">PLAN PRO RESTAURADO</span></td>
             <td><strong>${backup.venue?.tablesCount || 12} Mesas</strong></td>
             <td><span style="color: var(--text-secondary);">${tenantEmail}</span></td>
-            <td>
-              <div class="actions-flex">
-                <a href="/tenant?id=${tenantId}&impersonate=true" target="_blank" class="chip-btn" style="color: var(--primary); border-color: var(--primary); text-decoration: none;">
-                  🏢 Ingresar al Panel
-                </a>
-                <button class="chip-btn" style="color: #ef4444; border-color: #ef4444;" onclick="openDeleteTenantModal('${tenantId}', '${tenantName}', '${tenantEmail}')">
-                  🗑️ Eliminar
-                </button>
-              </div>
+            <td style="text-align: right;">
+              <select class="action-dropdown" onchange="handleTenantActionSelect(this, '${tenantId}', '${tenantName}', '${tenantEmail}', '/visitor?table=MESA-01')">
+                <option value="" selected disabled>⚡ Acciones ▾</option>
+                <option value="IMPERSONATE">🏢 Ingresar al Panel (Impersonar)</option>
+                <option value="PWA">☕ Abrir Menú PWA</option>
+                <option value="LICENSE">🔑 Generar Licencia</option>
+                <option value="DELETE" style="color: #ef4444;">🗑️ Eliminar Cliente</option>
+              </select>
             </td>
           `;
 
@@ -724,15 +745,14 @@
         <td><span class="badge-plan" style="background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid var(--success);">${plan}</span></td>
         <td><strong>10 Mesas</strong></td>
         <td><span style="color: var(--text-secondary);">${email}</span></td>
-        <td>
-          <div class="actions-flex">
-            <a href="/tenant?id=${tenantId}&impersonate=true" target="_blank" class="chip-btn" style="color: var(--primary); border-color: var(--primary); text-decoration: none;">
-              🏢 Ingresar al Panel
-            </a>
-            <button class="chip-btn" style="color: #ef4444; border-color: #ef4444;" onclick="openDeleteTenantModal('${tenantId}', '${name}', '${email}')">
-              🗑️ Eliminar
-            </button>
-          </div>
+        <td style="text-align: right;">
+          <select class="action-dropdown" onchange="handleTenantActionSelect(this, '${tenantId}', '${name}', '${email}', '/visitor?table=MESA-01')">
+            <option value="" selected disabled>⚡ Acciones ▾</option>
+            <option value="IMPERSONATE">🏢 Ingresar al Panel (Impersonar)</option>
+            <option value="PWA">☕ Abrir Menú PWA</option>
+            <option value="LICENSE">🔑 Generar Licencia</option>
+            <option value="DELETE" style="color: #ef4444;">🗑️ Eliminar Cliente</option>
+          </select>
         </td>
       `;
 
