@@ -176,7 +176,7 @@
         </div>
       </div>
 
-      <div style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); padding: 20px; border-radius: var(--radius-md);">
+      <div style="background: rgba(17,24,39,0.6); border: 1px solid var(--border-glass); padding: 20px; border-radius: var(--radius-md); margin-bottom: 20px;">
         <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 8px;">🔑 Activar / Renovar Licencia Encriptada:</h4>
         <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 14px;">Ingresa la clave de licencia entregada por el administrador de ServiceOS para renovar o cambiar de plan.</p>
         <form onsubmit="handleActivateLicense(event)" style="display: flex; gap: 10px;">
@@ -185,6 +185,17 @@
             🔓 Validar Licencia
           </button>
         </form>
+      </div>
+
+      <!-- PORTABILIDAD DE DATOS Y RESPALDO CLIENTE -->
+      <div style="background: rgba(99,102,241,0.08); border: 1px dashed var(--accent); padding: 20px; border-radius: var(--radius-md);">
+        <h4 style="font-size: 1rem; font-weight: 700; color: var(--accent); margin-bottom: 6px;">📦 Portabilidad de Datos & Respaldo Completo</h4>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 14px;">
+          Descarga un archivo <code>Backup_ServiceOS_[TU_RESTAURANTE].json</code> con la configuración de tus mesas, QR, personal e historial. Si decides cerrar tu cuenta o cambiar de servidor, podrás reimportar este archivo para restaurar 100% tus datos.
+        </p>
+        <button class="btn-action btn-secondary" style="width: auto; padding: 10px 20px; font-weight: 700; border-color: var(--accent); color: var(--accent);" onclick="exportClientDataBackup()">
+          📦 Descargar Mi Respaldo JSON
+        </button>
       </div>
     </div>
 
@@ -418,6 +429,32 @@
       } else {
         alert('Licencia inválida o expirada. Por favor contacta al administrador de ServiceOS.');
       }
+    }
+
+    function exportClientDataBackup() {
+      const tenantName = document.getElementById('tenantNameHeader').innerText || 'MiRestaurante';
+      const backupData = {
+        app: "ServiceOS Multi-Tenant SaaS",
+        version: "1.0",
+        exportDate: new Date().toISOString(),
+        clientExport: true,
+        tenant: {
+          name: tenantName,
+          tables: tenantTables,
+          staff: staffMembers,
+          auditLogs: auditLogs
+        }
+      };
+
+      const jsonStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", jsonStr);
+      downloadAnchor.setAttribute("download", `Backup_ServiceOS_${tenantName.replaceAll(' ', '_')}_${Date.now()}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+
+      alert(`¡Respaldo JSON descargado con éxito para ${tenantName}! Conserva este archivo para restaurar tu configuración cuando lo necesites.`);
     }
 
     // CHECK IF IMPERSONATED BY SUPERADMIN TO SHOW/HIDE SUPERADMIN BUTTON
