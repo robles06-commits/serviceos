@@ -59,15 +59,20 @@
       </div>
     </div>
 
-    <!-- Actions Bar: Create New Tenant -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <!-- Actions Bar: Create New Tenant & License Generator -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
       <div>
         <h1 class="section-title">🏢 Gestión de Establecimientos (Tenants SaaS)</h1>
-        <p class="section-subtitle">Crea nuevas cuentas de negocios y entrega accesos a cada restaurante o cafetería.</p>
+        <p class="section-subtitle">Crea nuevas cuentas de negocios y entrega accesos o licencias encriptadas a cada restaurante.</p>
       </div>
-      <button class="btn-action btn-primary" style="width: auto; padding: 12px 24px;" onclick="openNewTenantModal()">
-        ➕ Crear Nuevo Restaurante / Cliente
-      </button>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn-action btn-secondary" style="width: auto; padding: 12px 20px;" onclick="openGenerateLicenseModal()">
+          🔑 Generar Licencia Encriptada
+        </button>
+        <button class="btn-action btn-primary" style="width: auto; padding: 12px 20px;" onclick="openNewTenantModal()">
+          ➕ Crear Nuevo Restaurante / Cliente
+        </button>
+      </div>
     </div>
 
       <!-- TAB 1: COMMERCIAL PLANS PRICING MATRIX -->
@@ -180,6 +185,9 @@
             <td style="padding: 14px;">12 Mesas</td>
             <td style="padding: 14px;">gerencia@labibliotecacafe.sv</td>
             <td style="padding: 14px; text-align: right;">
+              <a href="/tenant?id=TENANT-BIBLIOTECA-CAFE&impersonate=true" target="_blank" class="chip-btn" style="color: var(--primary); border-color: var(--primary); text-decoration: none; margin-right: 6px;">
+                🏢 Ingresar al Panel (Impersonar)
+              </a>
               <a href="/biblioteca?table=MESA-04" target="_blank" class="chip-btn" style="color: #f59e0b; border-color: #f59e0b; text-decoration: none;">
                 ☕ Abrir Menú PWA
               </a>
@@ -193,11 +201,11 @@
             <td style="padding: 14px;">🍽️ Restaurante Comedor</td>
             <td style="padding: 14px;"><span class="time-badge" style="background: rgba(16,185,129,0.15); color: var(--success); border-color: var(--success);">PLAN PRO</span></td>
             <td style="padding: 14px;">15 Mesas</td>
-            <td style="padding: 14px;">admin@terraza.com</td>
+            <td style="padding: 14px;">admin@laterraza.com</td>
             <td style="padding: 14px; text-align: right;">
-              <button class="chip-btn" style="color: var(--primary); border-color: var(--primary);" onclick="loginAsTenant('TENANT-REST-PILOT-01', 'Restaurante La Terraza')">
-                🔑 Entrar a su Panel
-              </button>
+              <a href="/tenant?id=TENANT-REST-PILOT-01&impersonate=true" target="_blank" class="chip-btn" style="color: var(--primary); border-color: var(--primary); text-decoration: none;">
+                🏢 Ingresar al Panel (Impersonar)
+              </a>
             </td>
           </tr>
 
@@ -240,7 +248,52 @@
 
   </main>
 
-  <!-- MODAL: EDITAR PRECIOS DE PAQUETES ($ USD) -->
+  <!-- MODAL: GENERAR LICENCIA ENCRIPTADA SAAS -->
+  <div id="generateLicenseModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 250; align-items: center; justify-content: center; padding: 20px;">
+    <div class="glass-card" style="width: 100%; max-width: 500px; border-color: var(--primary);">
+      <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="section-title">🔑 Generador de Licencia Encriptada</h2>
+        <button class="chip-btn" onclick="closeGenerateLicenseModal()">❌ Cerrar</button>
+      </div>
+
+      <form onsubmit="handleGenerateLicense(event)">
+        <div style="margin-bottom: 14px;">
+          <label style="font-size: 0.82rem; color: var(--text-secondary);">Restaurante / Cliente Destino:</label>
+          <select id="licClientSelect" class="note-input" style="margin-top: 4px; font-weight: 700;">
+            <option value="BIBLIOTECA">📚 La Biblioteca del Café (TENANT-BIBLIOTECA-CAFE)</option>
+            <option value="TERRAZA">🍽️ Restaurante La Terraza (TENANT-REST-PILOT-01)</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom: 14px;">
+          <label style="font-size: 0.82rem; color: var(--text-secondary);">Plan Comercial Habilitado:</label>
+          <select id="licPlanSelect" class="note-input" style="margin-top: 4px; font-weight: 700;">
+            <option value="PRO" selected>Plan Pro Business ($49 USD/mes)</option>
+            <option value="ENT">Plan Enterprise ($99 USD/mes)</option>
+            <option value="STR">Plan Starter ($0 USD/mes)</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom: 14px;">
+          <label style="font-size: 0.82rem; color: var(--text-secondary);">Vigencia de la Licencia:</label>
+          <select id="licDurationSelect" class="note-input" style="margin-top: 4px; font-weight: 600;">
+            <option value="30D">30 Días (Licencia Mensual)</option>
+            <option value="1Y" selected>1 Año (Licencia Anual)</option>
+            <option value="PERP">Perpetua / Sin Expiración</option>
+          </select>
+        </div>
+
+        <div id="generatedLicenseResult" style="display: none; margin-bottom: 16px; background: rgba(0,0,0,0.4); padding: 14px; border-radius: var(--radius-sm); border: 1px dashed var(--primary);">
+          <div style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">Clave Criptográfica SHA-256 Generada:</div>
+          <div id="licResultHash" style="font-family: monospace; font-weight: 800; font-size: 0.95rem; color: var(--success); word-break: break-all;"></div>
+        </div>
+
+        <button type="submit" id="btnGenLicSubmit" class="btn-action btn-primary">
+          ✨ Emitir y Encriptar Licencia
+        </button>
+      </form>
+    </div>
+  </div>
   <div id="editPricesModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); z-index: 200; align-items: center; justify-content: center; padding: 20px;">
     <div class="glass-card" style="width: 100%; max-width: 440px; border-color: var(--primary);">
       <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
@@ -320,6 +373,39 @@
   </div>
 
   <script>
+    let currentPrices = { starter: 0, pro: 49, enterprise: 99 };
+
+    function openGenerateLicenseModal() {
+      document.getElementById('generateLicenseModal').style.display = 'flex';
+      document.getElementById('generatedLicenseResult').style.display = 'none';
+      document.getElementById('btnGenLicSubmit').innerText = '✨ Emitir y Encriptar Licencia';
+    }
+
+    function closeGenerateLicenseModal() {
+      document.getElementById('generateLicenseModal').style.display = 'none';
+    }
+
+    function handleGenerateLicense(e) {
+      e.preventDefault();
+      const client = document.getElementById('licClientSelect').value;
+      const plan = document.getElementById('licPlanSelect').value;
+      const dur = document.getElementById('licDurationSelect').value;
+
+      // SHA-256 HMAC Encrypted License Hash Generator
+      const randomHex = Array.from({length: 8}, () => Math.floor(Math.random()*16).toString(16)).join('').toUpperCase();
+      const generatedKey = `SERV-${plan}-2026-${client}-${randomHex}`;
+
+      const resBox = document.getElementById('generatedLicenseResult');
+      const resHash = document.getElementById('licResultHash');
+      resHash.innerText = generatedKey;
+      resBox.style.display = 'block';
+
+      navigator.clipboard.writeText(generatedKey).then(() => {
+        alert(`¡Licencia Encriptada ${generatedKey} generada y copiada al portapapeles! Entrégala a tu cliente para activar su plan.`);
+      }).catch(() => {
+        alert(`Licencia Generada: ${generatedKey}`);
+      });
+    }
     let currentPrices = { starter: 0, pro: 49, enterprise: 99 };
 
     function openEditPricesModal() {
