@@ -54,14 +54,26 @@
       </div>
     </div>
 
-    <!-- Tenant Navigation Tabs -->
-    <div class="category-tabs" style="margin-bottom: 24px;">
-      <button class="tab-btn active" onclick="switchTenantTab('QR')">🖨️ Imprimir Códigos QR</button>
-      <button class="tab-btn" onclick="switchTenantTab('CATALOG')">☕ Personalizar Carta & Intenciones</button>
-      <button class="tab-btn" onclick="switchTenantTab('STAFF')">👥 Mi Personal de Sala (PINs)</button>
-      <button class="tab-btn" onclick="switchTenantTab('LOGS')">📜 Historial & Audit Log Meseros</button>
-      <button class="tab-btn" onclick="switchTenantTab('LICENSE')">🔑 Licencia de Funcionamiento</button>
-      <button class="tab-btn" onclick="switchTenantTab('LINKS')">📱 Enlaces para Dispositivos</button>
+    <!-- ELEGANT MODULE DROPDOWN SELECTOR BAR -->
+    <div style="background: rgba(17, 24, 39, 0.85); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; box-shadow: var(--shadow-card);">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 1.4rem;">⚙️</span>
+        <div>
+          <div style="font-family: var(--font-heading); font-weight: 800; font-size: 1rem; color: var(--text-main);" id="currentModuleLabelDisplay">Módulo Activo: 🖨️ Mesas & Códigos QR Impresos</div>
+          <div style="font-size: 0.8rem; color: var(--text-muted);">Selecciona la sección de administración de tu restaurante</div>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; flex: 1; max-width: 400px; justify-content: flex-end;">
+        <select id="tenantModuleDropdown" class="note-input" style="font-weight: 700; font-size: 0.92rem; border-color: var(--primary); background: rgba(15, 23, 42, 0.95); color: var(--primary); cursor: pointer; padding: 10px 14px;" onchange="switchTenantTab(this.value)">
+          <option value="QR" selected>🖨️ 1. Mesas & Códigos QR Impresos</option>
+          <option value="CATALOG">☕ 2. Personalizar Carta & Intenciones</option>
+          <option value="STAFF">👥 3. Mi Personal de Sala (PINs)</option>
+          <option value="LOGS">📜 4. Historial & Audit Log Meseros</option>
+          <option value="LICENSE">🔑 5. Licencia de Funcionamiento SaaS</option>
+          <option value="LINKS">📱 6. Enlaces para Dispositivos & App</option>
+        </select>
+      </div>
     </div>
 
     <!-- TAB 1: QR CODE GENERATOR & PRINT ENGINE FOR TENANT -->
@@ -296,8 +308,20 @@
     ];
 
     function switchTenantTab(tab) {
-      document.querySelectorAll('.category-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
-      event.currentTarget.classList.add('active');
+      const drop = document.getElementById('tenantModuleDropdown');
+      if (drop) drop.value = tab;
+
+      const labels = {
+        'QR': '🖨️ Mesas & Códigos QR Impresos',
+        'CATALOG': '☕ Personalizar Carta & Intenciones',
+        'STAFF': '👥 Mi Personal de Sala (PINs)',
+        'LOGS': '📜 Historial & Audit Log Meseros',
+        'LICENSE': '🔑 Licencia de Funcionamiento SaaS',
+        'LINKS': '📱 Enlaces para Dispositivos & App'
+      };
+
+      const lbl = document.getElementById('currentModuleLabelDisplay');
+      if (lbl && labels[tab]) lbl.innerText = `Módulo Activo: ${labels[tab]}`;
 
       ['QR', 'CATALOG', 'STAFF', 'LOGS', 'LICENSE', 'LINKS'].forEach(t => {
         const el = document.getElementById(`tab${t}`);
