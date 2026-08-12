@@ -420,14 +420,43 @@
       }
     }
 
+    function loadActiveLicenseAndPrices() {
+      // 1. Read persistent package prices from localStorage set by SuperAdmin
+      let saasPrices = { starter: 0, pro: 5.99, enterprise: 14.99 };
+      const savedPricesStr = localStorage.getItem('serviceos_saas_prices');
+      if (savedPricesStr) {
+        try { saasPrices = JSON.parse(savedPricesStr); } catch(e) {}
+      }
+
+      // 2. Read persistent active license key or default
+      let activeKey = localStorage.getItem('activeTenantLicenseKey') || 'SERV-PRO-2026-CAFE-FD460DDE';
+      document.getElementById('licenseKeyHash').innerText = activeKey;
+
+      const proPrice = parseFloat(saasPrices.pro || 5.99).toFixed(2);
+      const entPrice = parseFloat(saasPrices.enterprise || 14.99).toFixed(2);
+      const strPrice = parseFloat(saasPrices.starter || 0).toFixed(2);
+
+      const planNameEl = document.getElementById('licensePlanName');
+      if (activeKey.includes('PRO')) {
+        planNameEl.innerText = `Plan Pro Business ($${proPrice} USD/mes)`;
+      } else if (activeKey.includes('ENT')) {
+        planNameEl.innerText = `Plan Enterprise ($${entPrice} USD/mes)`;
+      } else if (activeKey.includes('STR')) {
+        planNameEl.innerText = `Plan Starter ($${strPrice} USD/mes)`;
+      } else {
+        planNameEl.innerText = `Plan Pro Business ($${proPrice} USD/mes)`;
+      }
+    }
+
     function handleActivateLicense(e) {
       e.preventDefault();
-      const key = document.getElementById('inputLicenseKey').value.trim().toUpperCase();
-      if (key.includes('SERV-PRO') || key.includes('SERV-ENT')) {
-        document.getElementById('licenseKeyHash').innerText = key;
-        alert('¡Licencia de funcionamiento encriptada validada exitosamente!');
+      const inputKey = document.getElementById('inputLicenseKey').value.trim().toUpperCase();
+      if (inputKey.includes('SERV-PRO') || inputKey.includes('SERV-ENT') || inputKey.includes('SERV-STR')) {
+        localStorage.setItem('activeTenantLicenseKey', inputKey);
+        loadActiveLicenseAndPrices();
+        alert(`¡Licencia de funcionamiento encriptada ${inputKey} validada y activada exitosamente!`);
       } else {
-        alert('Licencia inválida o expirada. Por favor contacta al administrador de ServiceOS.');
+        alert('Licencia inválida o formato incorrecto. Por favor valida la clave emitida en SuperAdmin.');
       }
     }
 
@@ -536,6 +565,7 @@
 
     window.onload = function() {
       checkImpersonation();
+      loadActiveLicenseAndPrices();
       renderTenantTables();
       renderStaffList();
       renderAuditLogs();
