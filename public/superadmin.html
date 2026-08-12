@@ -697,6 +697,44 @@
       document.getElementById('editPricesModal').style.display = 'none';
     }
 
+    function loadSavedPrices() {
+      const saved = localStorage.getItem('serviceos_saas_prices');
+      if (saved) {
+        try {
+          currentPrices = JSON.parse(saved);
+        } catch(e) {}
+      }
+      applyPricesToUI();
+    }
+
+    function applyPricesToUI() {
+      const starter = parseFloat(currentPrices.starter) || 0;
+      const pro = parseFloat(currentPrices.pro) || 49.99;
+      const enterprise = parseFloat(currentPrices.enterprise) || 99.99;
+
+      const displayStarter = document.getElementById('priceDisplayStarter');
+      const displayPro = document.getElementById('priceDisplayPro');
+      const displayEnterprise = document.getElementById('priceDisplayEnterprise');
+
+      if (displayStarter) displayStarter.innerHTML = `$${starter.toFixed(2)} <span style="font-size: 0.85rem; font-weight: 400; color: var(--text-muted);">USD / 30 días</span>`;
+      if (displayPro) displayPro.innerHTML = `$${pro.toFixed(2)} <span style="font-size: 0.85rem; font-weight: 400; color: var(--text-muted);">USD / mes</span>`;
+      if (displayEnterprise) displayEnterprise.innerHTML = `$${enterprise.toFixed(2)} <span style="font-size: 0.85rem; font-weight: 400; color: var(--text-muted);">USD / mes</span>`;
+
+      const totalMRR = (pro + enterprise).toFixed(2);
+      const metricMRR = document.getElementById('metricMRR');
+      if (metricMRR) metricMRR.innerText = `$${totalMRR} USD / mes`;
+
+      // Dynamically sync updated prices into License Generator Modal options
+      const licPlanSelect = document.getElementById('licPlanSelect');
+      if (licPlanSelect) {
+        licPlanSelect.innerHTML = `
+          <option value="PRO" selected>Plan Pro Business ($${pro.toFixed(2)} USD/mes)</option>
+          <option value="ENT">Plan Enterprise ($${enterprise.toFixed(2)} USD/mes)</option>
+          <option value="STR">Plan Starter ($${starter.toFixed(2)} USD/mes)</option>
+        `;
+      }
+    }
+
     function handleSavePrices(e) {
       e.preventDefault();
       const starter = parseFloat(document.getElementById('inputPriceStarter').value) || 0;
@@ -704,16 +742,11 @@
       const enterprise = parseFloat(document.getElementById('inputPriceEnterprise').value) || 99.99;
 
       currentPrices = { starter, pro, enterprise };
+      localStorage.setItem('serviceos_saas_prices', JSON.stringify(currentPrices));
 
-      document.getElementById('priceDisplayStarter').innerHTML = `$${starter.toFixed(2)} <span style="font-size: 0.85rem; font-weight: 400; color: var(--text-muted);">USD / 30 días</span>`;
-      document.getElementById('priceDisplayPro').innerHTML = `$${pro.toFixed(2)} <span style="font-size: 0.85rem; font-weight: 400; color: var(--text-muted);">USD / mes</span>`;
-      document.getElementById('priceDisplayEnterprise').innerHTML = `$${enterprise.toFixed(2)} <span style="font-size: 0.85rem; font-weight: 400; color: var(--text-muted);">USD / mes</span>`;
-
-      const totalMRR = (pro + enterprise).toFixed(2);
-      document.getElementById('metricMRR').innerText = `$${totalMRR} USD / mes`;
-
+      applyPricesToUI();
       closeEditPricesModal();
-      alert(`¡Precios de paquetes actualizados exitosamente en Dólares Americanos ($ USD)!`);
+      alert(`¡Precios de paquetes actualizados y guardados exitosamente en Dólares Americanos ($ USD)!`);
     }
 
     function openNewTenantModal() {
@@ -760,6 +793,10 @@
       closeNewTenantModal();
       alert(`¡Cuenta de Restaurante "${name}" creada exitosamente!`);
     }
+
+    window.onload = function() {
+      loadSavedPrices();
+    };
   </script>
 </body>
 </html>
